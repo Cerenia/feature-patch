@@ -1,7 +1,10 @@
-from featurePatch.util import add_to_config_template
+from featurePatch.android.extractFeature import prep_folders, extract_files
+
 
 def main():
-    add_to_config_template()
+    prep_folders()
+    # subrepo_path, conf, top_level_code_dir, current_dir)
+    extract_files()
     pass
 
 

@@ -1,16 +1,17 @@
 import yaml
 
 
-# Read config file and provided args
-def configure():
-    pass
+config = None
 
 
-def load_configs():
-    print("Loading configs...")
-    with open("./conf/config.yml", 'r') as f:
-        conf = yaml.safe_load(f)
-    return conf
+def configuration():
+    global config
+    if config is None:
+        print("Loading configs...")
+        with open("./conf/config.yml", 'r') as f:
+            config = yaml.safe_load(f)
+    return config
+
 
 def add_to_config_template():
     """
@@ -19,7 +20,7 @@ def add_to_config_template():
     :return:
     """
     print("Editing configuration template...")
-    conf = load_configs()
+    conf = configuration()
     with open("./conf/config_template.yml", "r") as f:
         conf_template = yaml.safe_load(f)
     for key in conf:

@@ -13,6 +13,7 @@ pip install -r requirements.txt
 ## Configuration
 
 The utility can be configured with the cli with the following command:
+
 ```
 
 ```
