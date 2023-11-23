@@ -13,32 +13,9 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration
+from ..util import configuration, contact_points_path, subrepo_path
+from util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
 import os
-
-def subrepo_path():
-    conf = configuration()
-    return conf['android_feature_root']
-
-
-def contact_points_path():
-    return os.path.join(subrepo_path(), "contactPoints")
-
-
-def target_code_folder():
-    return os.path.join(contact_points_path(), "code")
-
-
-def target_drawable_folder():
-    return os.path.join(contact_points_path(), "drawable")
-
-
-def target_string_folder():
-    return os.path.join(contact_points_path(), "strings")
-
-
-def target_layout_folder():
-    return os.path.join(contact_points_path(), "layout")
 
 
 def prep_folders(windows=False):
@@ -75,11 +52,10 @@ def extract_files():
     Assumes Code to be in <android_feature_root>/..
     :return:
     """
-    subrepo_path = configuration()['android_feature_root']
-    find_files(subrepo_path, configuration()['android_src_root'], None, target_code_folder())
-    find_files(subrepo_path, configuration()['android_layout_root'], None, target_layout_folder())
-    find_files(subrepo_path, configuration()['android_drawable_root'], None, target_drawable_folder())
-    find_files(subrepo_path, configuration()['android_string_root'], None, target_string_folder())
+    find_files(subrepo_path(), configuration()['android_src_root'], None, target_code_folder())
+    find_files(subrepo_path(), configuration()['android_layout_root'], None, target_layout_folder())
+    find_files(subrepo_path(), configuration()['android_drawable_root'], None, target_drawable_folder())
+    find_files(subrepo_path(), configuration()['android_string_root'], None, target_string_folder())
 
 
 def find_files(subrepo_path, top_level_source_dir, current_dir, top_level_target_dir):

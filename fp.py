@@ -2,9 +2,9 @@ from featurePatch.android.extractFeature import prep_folders, extract_files
 
 
 def main():
-    prep_folders()
+    # prep_folders()
     # subrepo_path, conf, top_level_code_dir, current_dir)
-    extract_files()
+    # extract_files()
     pass
 
 
