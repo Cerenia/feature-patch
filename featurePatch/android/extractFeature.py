@@ -15,6 +15,8 @@ Capabilities:
 from plumbum import local
 from ..util import configuration, contact_points_path, subrepo_path
 from util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
+from util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
+
 import os
 
 
@@ -52,13 +54,13 @@ def extract_files():
     Assumes Code to be in <android_feature_root>/..
     :return:
     """
-    find_files(subrepo_path(), configuration()['android_src_root'], None, target_code_folder())
-    find_files(subrepo_path(), configuration()['android_layout_root'], None, target_layout_folder())
-    find_files(subrepo_path(), configuration()['android_drawable_root'], None, target_drawable_folder())
-    find_files(subrepo_path(), configuration()['android_string_root'], None, target_string_folder())
+    find_files(subrepo_path(), src_code_folder(), None, target_code_folder())
+    find_files(subrepo_path(), src_layout_folder(), None, target_layout_folder())
+    find_files(subrepo_path(), src_drawable_folder(), None, target_drawable_folder())
+    find_files(subrepo_path(), src_string_folder(), None, target_string_folder())
 
 
-def find_files(subrepo_path, top_level_source_dir, current_dir, top_level_target_dir):
+def find_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
     """
         recursively walks through current dir and copies any file that contains the marker into
     :param subrepo_path: path of the subrepo inside the container
@@ -90,7 +92,7 @@ def find_files(subrepo_path, top_level_source_dir, current_dir, top_level_target
                         # What needs to be created in the code folder if it doesn't exist yet
                         path_diff = f_path.split(top_level_source_dir)[1].split(f_name)[0]
                         # remove first slash
-                        if path_diff[0] == "/" or path_diff[0] == "\\":
+                        if path_diff[0] == os.sep:
                             path_diff = path_diff[1:]
                         target = os.path.join(top_level_target_dir, path_diff)
                         print(target)
@@ -105,7 +107,7 @@ def find_files(subrepo_path, top_level_source_dir, current_dir, top_level_target
                 print(f"{f_name} was not dir or file!")
 
 
-def check_marker_matchings(file):
+def check_marker_matchings(file: str):
     """
     :param file: The path of the file to examine
     :return: true is there is an equal nr. of starts and ends (does not catch missorderings)

@@ -40,18 +40,25 @@ Assumption: patch files have been written in such a way as to minimize the inter
 import diff_match_patch as dmp_module
 from plumbum import local
 from util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
+from util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
 from ..util import runtime_log_path, error_log_path
+import os
 
 
-def match_files(subrepo_dir, container_dir):
+def match_files(subrepo_dir: str, container_dir: str):
     """
     walks through the directory and attempts to match all the files it contains. For each success, appends the runtime log.
     for failures, appends the match error log
     :param subrepo_dir: root of folder to walk
     :param container_dir: corresponding folder in the container repository
     :param runtime_log: path to runtime log file
-    :return:
     """
+    # walk through folder hierarchy
+    # for each file, check to find the equivalent file in the other folder
+    # if found, update the runtime log, otherwise update the error log
+    for dirpath, dirnames, filenames in os.walk(subrepo_dir):
+        CONTINUE HERE
+        pass
     pass
 
 
@@ -62,6 +69,10 @@ def initiate_runtime_log():
     :return:
     """
     # truncate or create file
-    with open(runtime_log_path(), "w") as f:
+    with open(runtime_log_path(), "w"):
         pass
-    match_files(target_code_folder(), )
+    # go through all folders and create matchings
+    match_files(target_code_folder(), src_code_folder())
+    match_files(target_drawable_folder(), src_drawable_folder())
+    match_files(target_string_folder(), src_string_folder())
+    match_files(target_layout_folder(), src_layout_folder())
