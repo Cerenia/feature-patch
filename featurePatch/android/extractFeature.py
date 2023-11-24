@@ -13,9 +13,9 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path
-from util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
-from util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
+from ..util import configuration, contact_points_path, subrepo_path, path_diff
+from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
+from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
 
 import os
 
@@ -60,10 +60,10 @@ def extract_files():
     find_files(subrepo_path(), src_string_folder(), None, target_string_folder())
 
 
-def find_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
+def find_files(subrep_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
     """
         recursively walks through current dir and copies any file that contains the marker into
-    :param subrepo_path: path of the subrepo inside the container
+    :param subrep_path: path of the subrepo inside the container
     :param top_level_source_dir: where the files are expected to be listed (code, drawables, strings, layouts..)
     :param current_dir: recursive directory helper, set to topLevelDir if None
     :param get_top_level_target_dir: pass the function handle for the target folder
@@ -72,10 +72,10 @@ def find_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, t
         current_dir = top_level_source_dir
     for f_name in os.listdir(current_dir):
         f_path = os.path.join(current_dir, f_name)
-        if f_name != os.path.basename(subrepo_path):
+        if f_name != os.path.basename(subrep_path):
             if os.path.isdir(f_path):
                 print(f"Traversing into {f_name}")
-                find_files(subrepo_path, top_level_source_dir, f_path, top_level_target_dir)
+                find_files(subrep_path, top_level_source_dir, f_path, top_level_target_dir)
             elif os.path.isfile(f_path):
                 print(f"Checking {f_name} for marker")
                 # if retcode == 1, no match was found
@@ -90,11 +90,8 @@ def find_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, t
                         exit(1)
                     if top_level_source_dir != current_dir:
                         # What needs to be created in the code folder if it doesn't exist yet
-                        path_diff = f_path.split(top_level_source_dir)[1].split(f_name)[0]
-                        # remove first slash
-                        if path_diff[0] == os.sep:
-                            path_diff = path_diff[1:]
-                        target = os.path.join(top_level_target_dir, path_diff)
+                        missing_dirs = path_diff(path_diff(f_path, top_level_source_dir), f_name)
+                        target = os.path.join(top_level_target_dir, missing_dirs)
                         print(target)
                         if not os.path.isdir(target):
                             local['mkdir'][target]()

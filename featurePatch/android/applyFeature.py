@@ -56,8 +56,14 @@ def match_files(subrepo_dir: str, container_dir: str):
     # walk through folder hierarchy
     # for each file, check to find the equivalent file in the other folder
     # if found, update the runtime log, otherwise update the error log
-    for dirpath, dirnames, filenames in os.walk(subrepo_dir):
-        CONTINUE HERE
+    for dirpath, _, filenames in os.walk(subrepo_dir):
+        for filename in filenames:
+            
+            pass
+        # compute diff between dirpath  + all filenames and subrepo dir
+        # check if container_dir + diff  + filename  exists
+        # if yes, append runtime_log
+        # else, append errors
         pass
     pass
 
