@@ -39,8 +39,8 @@ Assumption: patch files have been written in such a way as to minimize the inter
 
 import diff_match_patch as dmp_module
 from plumbum import local
-from util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
-from util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
+from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
+from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
 from ..util import runtime_log_path, error_log_path, path_diff
 import os
 import json
