@@ -41,8 +41,9 @@ import diff_match_patch as dmp_module
 from plumbum import local
 from util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
-from ..util import runtime_log_path, error_log_path
+from ..util import runtime_log_path, error_log_path, path_diff
 import os
+import json
 
 
 def match_files(subrepo_dir: str, container_dir: str):
@@ -58,14 +59,35 @@ def match_files(subrepo_dir: str, container_dir: str):
     # if found, update the runtime log, otherwise update the error log
     for dirpath, _, filenames in os.walk(subrepo_dir):
         for filename in filenames:
-            
-            pass
-        # compute diff between dirpath  + all filenames and subrepo dir
-        # check if container_dir + diff  + filename  exists
-        # if yes, append runtime_log
-        # else, append errors
-        pass
-    pass
+            filepath = os.path.join(dirpath, filename)
+            diff = path_diff(filepath, subrepo_dir)
+            match = os.path.join(container_dir, diff)
+            if os.path.isfile(match):
+                print(f"Found matching {diff} in container repository!")
+                with open(runtime_log_path(), 'a') as f:
+                    f.write(f"{format_log_element(filepath, match)},\n")
+            else:
+                print(f"ERROR: {diff} was not found in container repository, please check this file manually.")
+                with open(error_log_path(), 'a') as f:
+                    f.write(f"{format_log_element(filepath)},\n")
+    # Close Json Array Litteral
+    for path in [runtime_log_path, error_log_path]:
+        with open(path(), "a") as f:
+            f.write("]")
+
+
+def format_log_element(subrepo_file, matching_container_file=None):
+    """
+    creates an element of the runtime or error dictionary.
+    runtime if both paths are given, error otherwise.
+    uses Json formatting
+    :return: a Json formatted python dictionary
+    """
+    element = dict()
+    element["contact_point"] = subrepo_file
+    element["match"] = "" if matching_container_file is None else matching_container_file
+    element["diffed"] = False
+    return json.dumps(element)
 
 
 def initiate_runtime_log():
@@ -74,9 +96,12 @@ def initiate_runtime_log():
      Record if you cannot match a file and save the matched pairs + status indicator in the working dir.
     :return:
     """
-    # truncate or create file
-    with open(runtime_log_path(), "w"):
-        pass
+    for path in [runtime_log_path, error_log_path]:
+        # truncate or create file
+        with open(path(), "w") as f:
+            # Initiate Json Array Litteral
+            f.write("[\n")
+
     # go through all folders and create matchings
     match_files(target_code_folder(), src_code_folder())
     match_files(target_drawable_folder(), src_drawable_folder())
