@@ -1,11 +1,12 @@
-from featurePatch.android.extractFeature import prep_folders, extract_files
+from featurePatch.android.extractFeature import initialize_extraction, extract_files
 from featurePatch.android.applyFeature import initiate_runtime_log
+from featurePatch.util import initialize_logger
 
 
 def main():
-    #prep_folders()
-    #extract_files()
-    initiate_runtime_log()
+    initialize_extraction()
+    extract_files()
+    #initiate_runtime_log()
 
 
 if __name__ == '__main__':

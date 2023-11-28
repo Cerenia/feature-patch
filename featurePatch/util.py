@@ -1,8 +1,9 @@
 import yaml
 import os
+import logging
 
 
-config = None
+config: dict
 
 
 def configuration():
@@ -12,6 +13,37 @@ def configuration():
         with open("./conf/config.yml", 'r') as f:
             config = yaml.safe_load(f)
     return config
+
+
+log: logging.Logger
+
+
+def initialize_logger():
+    """
+    Initializes root logger and logger formatting.
+    :return: a handle to the root logger.
+    """
+    global log
+    log = logging.getLogger("feature-patch")
+    # TODO: special formatting?
+    return log
+
+
+def get_logger(name=None):
+    """
+    Any logger fetches with get_logger
+    down the line will be a descendant if initialize_logger was
+    previously called and a name is provided. Otherwise, the root logger is returned.
+    PRE: initialize_logger was called
+    :param name: subname of the new logger. Root logger returned if none.
+    :return:
+    """
+    assert log is not None, "Please call ..util.initialize_logger."
+    if name is None:
+        return log
+    else:
+        return logging.getLogger(f"feature-patch.{name}")
+    pass
 
 
 def subrepo_path():
@@ -87,6 +119,7 @@ def path_diff(long_path: str, short_path: str, tail=True):
     assert len(long_path) > len(short_path)
 
     parts = long_path.split(short_path)
+    print(parts)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
     useful_parts = [element for element in filter(lambda x: x, parts)]
     if tail:
