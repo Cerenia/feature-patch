@@ -41,7 +41,7 @@ import diff_match_patch as dmp_module
 from plumbum import local
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
-from ..util import runtime_log_path, error_log_path, path_diff
+from ..util import runtime_record_path, error_record_path, path_diff
 import os
 import json
 
@@ -57,6 +57,7 @@ def match_files(subrepo_dir: str, container_dir: str):
     # walk through folder hierarchy
     # for each file, check to find the equivalent file in the other folder
     # if found, update the runtime log, otherwise update the error log
+    # TODO: Use Json Lib if you want to use json..  assume record can be hold in memory
     for dirpath, _, filenames in os.walk(subrepo_dir):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
@@ -64,19 +65,19 @@ def match_files(subrepo_dir: str, container_dir: str):
             match = os.path.join(container_dir, diff)
             if os.path.isfile(match):
                 print(f"Found matching {diff} in container repository!")
-                with open(runtime_log_path(), 'a') as f:
-                    f.write(f"{format_log_element(filepath, match)},\n")
+                with open(runtime_record_path(), 'a') as f:
+                    f.write(f"{format_runtime_task(filepath, match)},\n")
             else:
                 print(f"ERROR: {diff} was not found in container repository, please check this file manually.")
-                with open(error_log_path(), 'a') as f:
-                    f.write(f"{format_log_element(filepath)},\n")
-    # Close Json Array Litteral
-    for path in [runtime_log_path, error_log_path]:
+                with open(error_record_path(), 'a') as f:
+                    f.write(f"{format_runtime_task(filepath)},\n")
+    # Close Json Array Literal
+    for path in [runtime_record_path, error_record_path]:
         with open(path(), "a") as f:
             f.write("]")
 
 
-def format_log_element(subrepo_file, matching_container_file=None):
+def format_runtime_task(subrepo_file, matching_container_file=None):
     """
     creates an element of the runtime or error dictionary.
     runtime if both paths are given, error otherwise.
@@ -96,10 +97,10 @@ def initiate_runtime_log():
      Record if you cannot match a file and save the matched pairs + status indicator in the working dir.
     :return:
     """
-    for path in [runtime_log_path, error_log_path]:
+    for path in [runtime_record_path, error_record_path]:
         # truncate or create file
         with open(path(), "w") as f:
-            # Initiate Json Array Litteral
+            # Initiate Json Array Literal
             f.write("[\n")
 
     # go through all folders and create matchings
@@ -107,3 +108,41 @@ def initiate_runtime_log():
     match_files(target_drawable_folder(), src_drawable_folder())
     match_files(target_string_folder(), src_string_folder())
     match_files(target_layout_folder(), src_layout_folder())
+
+
+def generate_patched_file(match, contact_point):
+    ## TODO
+    return ""
+
+
+def run():
+    # iterate through runtime log
+    # for each entry that has not yet run, generate patched file
+    # replace 'match'
+    # (any error handling that will become apparent)
+    # update runtime log
+
+    # assume the entire record can be kept in memory for now
+    with open(runtime_record_path(), "r") as f:
+        records = json.loads(f.read())
+    current_record = 0
+    while records[current_record]["diffed"]:
+        current_record += 1
+    while current_record < len(records):
+        match_path = records[current_record]["match"]
+        with open(match_path, "r") as f:
+            match = f.read()
+        with open(records[current_record]["contact_point"], "r") as f:
+            contact_point = f.read()
+        try:
+            new_content = generate_patched_file(match, contact_point)
+            with open(match_path, "w") as f:
+                f.write(new_content)
+        except Exception as e:
+            ## TODO: Error handling
+            pass
+        finally:
+            # Write the updated record to file after each iteration
+            records[current_record]["diffed"] = True
+            with open(runtime_record_path(), "w") as f:
+                f.write(json.dumps(records))

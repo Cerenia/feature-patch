@@ -4,18 +4,16 @@ import logging
 
 
 config: dict = None
+log: logging.Logger = None
 
 
 def configuration():
     global config
     if config is None:
-        print("Loading configs...")
+        log.info("Loading Configs...")
         with open("./conf/config.yml", 'r') as f:
             config = yaml.safe_load(f)
     return config
-
-
-log: logging.Logger = None
 
 
 def initialize_logger():
@@ -96,23 +94,23 @@ def add_to_config_template():
      Deleting flags should be done manually (for now)
     :return:
     """
-    print("Editing configuration template...")
+    log.info("Editing configuration template...")
     conf = configuration()
     with open("./conf/config_template.yml", "r") as f:
         conf_template = yaml.safe_load(f)
     for key in conf:
         if key not in conf_template.keys():
-            print(f"Adding confguration item '{key}'")
+            log.info(f"Adding confguration item '{key}'")
             conf_template[key] = ""
     with open("./conf/config_template.yml", "w") as f:
         yaml.dump(conf_template, f)
 
 
-def runtime_log_path():
-    return os.path.join(configuration()["working_dir"], "runtime_log.txt")
+def runtime_record_path():
+    return os.path.join(configuration()["working_dir"], "runtime_record.txt")
 
 
-def error_log_path():
+def error_record_path():
     return os.path.join(configuration()["working_dir"], "errors.txt")
 
 
@@ -148,7 +146,6 @@ def path_diff(long_path: str, short_path: str, tail=True):
     assert len(long_path) > len(short_path)
 
     parts = long_path.split(short_path)
-    print(parts)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
     useful_parts = [element for element in filter(lambda x: x, parts)]
     if tail:
