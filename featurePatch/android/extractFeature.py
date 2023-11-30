@@ -25,12 +25,12 @@ log: logging.Logger
 
 def initialize_extraction():
     initialize_logging()
-    prep_folders()
+    #prep_folders()
 
 
 def initialize_logging():
     global log
-    log = get_logger("extract")
+    log = get_logger()
 
 
 def prep_folders(windows=False):
