@@ -20,17 +20,7 @@ import logging
 
 import os
 
-log: logging.Logger
-
-
-def initialize_extraction():
-    initialize_logging()
-    #prep_folders()
-
-
-def initialize_logging():
-    global log
-    log = get_logger()
+log: logging.Logger = get_logger()
 
 
 def prep_folders(windows=False):
