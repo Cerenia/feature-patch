@@ -29,11 +29,7 @@ def prep_folders(windows=False):
     expects to be run in bash shell (TODO: add a Windows flag + any changed commands?)
     :return:
     """
-    # expand path if using cygwin
-    os.environ["PATH"] = (
-        # TODO: (for plumbum) extract to configs once structure is clearer. or just don't use plumbum :(
-        os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
-    )
+
     layout_path = target_layout_folder()
     string_path = target_string_folder()
     drawable_path = target_drawable_folder()

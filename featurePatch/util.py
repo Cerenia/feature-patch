@@ -7,6 +7,13 @@ config: dict = None
 log: logging.Logger = None
 
 
+def init_cygwin():
+    # expand path if using cygwin
+    os.environ["PATH"] = (
+        # TODO: (for plumbum) extract to configs once structure is clearer. or just don't use plumbum :(
+        os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
+    )
+
 def configuration():
     global config
     if config is None:

@@ -17,11 +17,19 @@ def run_command(cmd):
     logger().info(cmd)
     output = cmd()
     logger().info(output)
+    # TODO: Error handling?
 
 
 def navigate_to(path):
     logger().info(f"chdir {path}")
     os.chdir(path)
+
+
+def only_contact_points_unstaged():
+    # Before we stash the extracted files, we want to make sure that only files
+    # Do we even want to stash? Probably rather just make a new branch before we do the extraction, right?
+    CONTINUE HERE
+    pass
 
 def push_subrepo():
     # Navigate to the root of the container and push the changes of the subrepository
@@ -29,7 +37,7 @@ def push_subrepo():
     # Push the changes to the subrepository and log the generated output
     cmd = git["subrepo", SUBREPO_VERBOSITY, "push", configuration()["feature_git_root"]]
     run_command(cmd)
-    # TODO: Error handling?
+
 
 
 def pull_subrepo():
