@@ -68,7 +68,7 @@ def set_error_logger():
     log.setLevel(logging.ERROR)
 
 
-def get_logger():
+def logger():
     assert log is not None, "Please call ..util.initialize_logger or any of the log level methods."
     return log
 
@@ -78,7 +78,7 @@ def subrepo_path():
     :return: absolute root path of feature repository as set in config
     """
     conf = configuration()
-    return conf['android_feature_root']
+    return conf['feature_git_root']
 
 
 def contact_points_path():

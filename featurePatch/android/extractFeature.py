@@ -13,14 +13,14 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path, path_diff, get_logger
+from ..util import configuration, contact_points_path, subrepo_path, path_diff, logger
 from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
 from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
 import logging
 
 import os
 
-log: logging.Logger = get_logger()
+log: logging.Logger = logger()
 
 
 def prep_folders(windows=False):
@@ -54,7 +54,7 @@ def prep_folders(windows=False):
 def extract_files():
     """
     Walk through expected file hierarchy and find all files that contain the string marker in configs
-    Assumes Code to be in <android_feature_root>/..
+    Assumes Code to be in <feature_git_root>/..
     :return:
     """
     duplicate_files(subrepo_path(), src_code_folder(), None, target_code_folder())
