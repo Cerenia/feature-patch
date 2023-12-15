@@ -4,6 +4,7 @@ import logging
 
 
 config: dict = None
+const: dict = None
 log: logging.Logger = None
 
 
@@ -14,6 +15,9 @@ def init_cygwin():
         os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
     )
 
+
+# can't pass a global as a param thus need to duplicate some code with the following 2 functions
+
 def configuration():
     global config
     if config is None:
@@ -21,6 +25,15 @@ def configuration():
         with open("./conf/config.yml", 'r') as f:
             config = yaml.safe_load(f)
     return config
+
+
+def constants():
+    global const
+    if const is None:
+        log.info("Loading Constants...")
+        with open("./conf/config.yml", 'r') as f:
+            const = yaml.safe_load(f)
+    return constants
 
 
 def initialize_logger():

@@ -1,2 +1,3 @@
+# User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are TODO: configurable by the cli or through manual editing
 feature_git_root: ''
 android_src_root: C:Users\user\path\to\the\android\src\code\folder
