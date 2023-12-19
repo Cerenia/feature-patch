@@ -41,12 +41,9 @@ Assumption: patch files have been written in such a way as to minimize the inter
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
-from ..util import runtime_record_path, error_record_path, path_diff, logger, configuration
+from ..util import runtime_record_path, error_record_path, path_diff, log, configuration
 import os
 import json
-import logging
-
-log: logging.Logger = logger()
 
 
 def match_files(subrepo_dir: str, container_dir: str):

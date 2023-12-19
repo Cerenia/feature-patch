@@ -1,11 +1,10 @@
 import yaml
 import os
-import logging
+from log import log
 
 
 config: dict = None
 const: dict = None
-log: logging.Logger = None
 
 
 def init_cygwin():
@@ -36,61 +35,6 @@ def constants():
     return constants
 
 
-def initialize_logger():
-    """
-    Initializes root logger and logger formatting.
-    :return: a handle to the root logger.
-    """
-    global log
-    if log is not None:
-        return log
-    # Apply formatting
-    source_descriptor = "%(levelname)s:%(filename)s|%(funcName)s:"
-    message = "%(message)s"
-    # slightly easier to read
-    console_formatter = logging.Formatter(source_descriptor + "\n" + message)
-    file_formatter = logging.Formatter(source_descriptor + ":" + message)
-    sh = logging.StreamHandler()
-    sh.setFormatter(console_formatter)
-    # https://bugs.python.org/issue27493
-    log_file_path = str(os.path.join(configuration()["working_dir"], "log.txt"))
-    # clear file
-    with open(log_file_path, "w"):
-        pass
-    fh = logging.FileHandler(log_file_path)
-    fh.setFormatter(file_formatter)
-    log = logging.getLogger("feature-patch")
-    # consider all messages
-    fh.setLevel(logging.DEBUG)
-    sh.setLevel(logging.DEBUG)
-    log.addHandler(fh)
-    log.addHandler(sh)
-    return log
-
-
-def set_debug_logger():
-    initialize_logger()
-    log.setLevel(logging.DEBUG)
-
-
-def set_info_logger():
-    initialize_logger()
-    log.setLevel(logging.DEBUG)
-
-
-def set_warning_logger():
-    initialize_logger()
-    log.setLevel(logging.WARNING)
-
-
-def set_error_logger():
-    initialize_logger()
-    log.setLevel(logging.ERROR)
-
-
-def logger():
-    assert log is not None, "Please call ..util.initialize_logger or any of the log level methods."
-    return log
 
 
 def subrepo_path():

@@ -13,14 +13,11 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path, path_diff, logger
+from ..util import configuration, contact_points_path, subrepo_path, path_diff, log, set_info_logger
 from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
 from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
-import logging
 
 import os
-
-log: logging.Logger = logger()
 
 
 def prep_folders(windows=False):
@@ -119,3 +116,19 @@ def check_marker_matchings(file: str):
                 ends += 1
     return starts == ends
 
+
+def extract_feature(start_clean=True, manually_initialize_logger=False):
+    """
+        Main entry point to extract feature.
+        PRE: config.yml correctly initialized
+    :param start_clean: Set False if you are continuing extraction after error or manual edit. Will restart the complete
+    process by default.
+    :param: manually_initialize_logger: Set true if different log level is set before the call. Otherwise will
+    initialize logger with level INFO by default.
+    :return:
+    """
+    if not manually_initialize_logger:
+        set_info_logger()
+    if start_clean:
+        prep_folders()
+    extract_files()
