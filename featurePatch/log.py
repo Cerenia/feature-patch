@@ -3,7 +3,7 @@ Globally scoped logging.Logger, set to INFO by default.
 Functions provided to change logging level or create a logfile duplicating the console logging.
 
 Use:
-from <path to log>.log import log
+from <path to log>.fp_log import log
 
 """
 
@@ -16,11 +16,13 @@ if log is None:
     streamHandler = logging.StreamHandler()
     # Apply formatting
     source_descriptor = "%(levelname)s:%(filename)s|%(funcName)s:"
-    message = "%(message)s"
+    message = "%(message)s\n"
     streamHandler.setFormatter(logging.Formatter(source_descriptor + "\n" + message))
     log = logging.getLogger("feature-patch")
-    streamHandler.setLevel(logging.INFO)
+    streamHandler.setLevel(logging.DEBUG)
     log.addHandler(streamHandler)
+    log.setLevel(logging.INFO)
+    log.info("Logger initialized!")
 
 
 def initialize_file_handler(log_file_path):
