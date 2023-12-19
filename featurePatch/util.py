@@ -1,28 +1,64 @@
 import yaml
 import os
-from .fp_log import log
-
+from .log import log
 
 config: dict = None
 const: dict = None
+conf_path = None
 
 
 def init_cygwin():
     # expand path if using cygwin
     os.environ["PATH"] = (
         # TODO: (for plumbum) extract to configs once structure is clearer. or just don't use plumbum :(
-        os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
+            os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
     )
+
+
+def set_conf_path(path):
+    global conf_path
+    conf_path = path
+
+
+def find_conf_path(manual_path=None):
+    if conf_path is None:
+        if os.path.isdir("./conf"):
+            return os.path.abspath(os.path.join(".", "conf"))
+        else:
+            log.error(
+                "Expected configuration folder was not found in working directory, please provide the path manually")
+            manual_path = input()
+            log.error(
+                f"You have provided: {manual_path}\nThis will persist through this process instance. You may want to call 'set_conf_path' in the future.")
+            return manual_path
+    else:
+        return conf_path
 
 
 # can't pass a global as a param thus need to duplicate some code with the following 2 functions
 
 def configuration():
+    """
+    Assumes to find config.yml at <python_root>/conf/config.yml
+    :return:
+    """
     global config
     if config is None:
         log.info("Loading Configs...")
-        with open("./conf/config.yml", 'r') as f:
-            config = yaml.safe_load(f)
+        if conf_path is None:
+            log.info("Attempting to find configuration folder...")
+            path = find_conf_path()
+            try:
+                with open(os.path.join(path, "config.yml"), 'r') as f:
+                    config = yaml.safe_load(f)
+            except FileNotFoundError as e:
+                log.critical("Could not find configuration.")
+                log.critical(str(e))
+                exit(1)
+            set_conf_path(path)
+        else:
+            with open(os.path.join(conf_path, "config.yml")) as f:
+                config = yaml.safe_load(f)
     return config
 
 
@@ -30,11 +66,13 @@ def constants():
     global const
     if const is None:
         log.info("Loading Constants...")
-        with open("./conf/config.yml", 'r') as f:
+        if conf_path is None:
+            # call config to attempt finding and setting conf path automagically
+            configuration()
+        assert conf_path is not None, "Whuut, conf path is None but program did not terminate"
+        with open(os.path.join(conf_path, "const.yml"), 'r') as f:
             const = yaml.safe_load(f)
-    return constants
-
-
+    return const
 
 
 def subrepo_path():

@@ -3,7 +3,7 @@ Globally scoped logging.Logger, set to INFO by default.
 Functions provided to change logging level or create a logfile duplicating the console logging.
 
 Use:
-from <path to log>.fp_log import log
+from <path to log>.log import log
 
 """
 

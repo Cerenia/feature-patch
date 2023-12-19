@@ -7,21 +7,22 @@
 # in the repo are provided when reading the source proved necessary.
 import os
 from plumbum import local
-from .util import configuration, logger, constants
+from .util import configuration, constants
+from .log import log
 
 git = local['git']
 
 
 def run_command(cmd):
     # Also logs it with level info
-    logger().info(cmd)
+    log.info(cmd)
     output = cmd()
-    logger().info(output)
+    log.info(output)
     # TODO: Error handling?
 
 
 def navigate_to(path):
-    logger().info(f"chdir {path}")
+    log.info(f"chdir {path}")
     os.chdir(path)
 
 
@@ -56,7 +57,7 @@ def merge_migration_branch(suffix=None):
 
     # Check preconditions
     if not os.path.isdir(configuration()["feature_git_root"]):
-        logger().critical("Subrepository missing from container. Attempted migration branch merge aborted.")
+        log.critical("Subrepository missing from container. Attempted migration branch merge aborted.")
         exit(1)
     with open(os.path.join(configuration()["feature_git_root"]), ".gitrepo") as f:
         lines = f.readlines()
@@ -65,7 +66,7 @@ def merge_migration_branch(suffix=None):
         # idx out of range indicates some issue with the .gitrepo file, there should always be a line listing the branch
         idx = idx + 1
     if "master" not in lines[idx]:
-        logger().critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
+        log.critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
         exit(1)
 
     cmd = git["subrepo", "clone", f"--branch={branch_name(suffix)}", "--method=merge", configuration()["feature_git_remote"], configuration()["feature_git_root"]]
@@ -92,7 +93,7 @@ def pull_subrepo():
 
 def pull_container():
     # TODO: add the option to be much more specific with the new version you want, tags etc...
-    logger().info("Pulling container...")
+    log.info("Pulling container...")
     navigate_to(configuration()["container_git_root"])
     cmd = git["pull"]
     run_command(cmd)
