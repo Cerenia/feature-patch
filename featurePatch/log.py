@@ -3,7 +3,7 @@ Globally scoped logging.Logger, set to INFO by default.
 Functions provided to change logging level or create a logfile duplicating the console logging.
 
 Use:
-from log import log
+from <path to log>.log import log
 
 """
 
@@ -11,10 +11,8 @@ import logging
 
 log: logging.Logger = None
 
-fileHandler: logging.FileHandler = None
-
 # Initialize console logger, Info by default
-if log is not None:
+if log is None:
     streamHandler = logging.StreamHandler()
     # Apply formatting
     source_descriptor = "%(levelname)s:%(filename)s|%(funcName)s:"

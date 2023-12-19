@@ -5,7 +5,7 @@ from featurePatch.util import init_cygwin
 
 def main():
     extract_feature()
-
+    
 
 if __name__ == '__main__':
     main()

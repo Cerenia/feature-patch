@@ -1,6 +1,6 @@
 import yaml
 import os
-from log import log
+from .log import log
 
 
 config: dict = None
