@@ -1,3 +1,4 @@
 # Any static values that are not user dependent and thus not sensitive. A user may still have reasons to edit these
 # but they are generally not expected to change
 migration_branch_base_name: migration
+subrepo_temporary_directoryname: subrepo_tmp

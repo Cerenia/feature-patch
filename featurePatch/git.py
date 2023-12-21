@@ -18,22 +18,42 @@ git = local['git']
 #
 ###
 
-FEATURE_GIT_ROOT = configuration()["feature_git_root"]
+FEATURE_ROOT_PATH = configuration()["feature_git_root"]
 FEATURE_REMOTE_URL = configuration()["feature_git_remote"]
+FEATURE_ACCESS_TOKEN = configuration()["feature_github_access_token"]
+FEATURE_TMP_CHECKOUT_LOCATION = configuration()["feature_git_temp_root"]
+FEATURE_TMP_DIRNAME = constants()["subrepo_temporary_directoryname"]
 SUBREPO_VERBOSITY = configuration()["subrepo_verbosity"]
+CONTAINER_ROOT_PATH = configuration()["container_git_root"]
+GITHUB_USERNAME = configuration()["github_username"]
+GIT_VERBOSITY = configuration()["git_verbosity"]
+
+run_command_counter = 1
 
 
-def run_command(cmd):
-    # Also logs it with level info
-    log.info(cmd)
+def execute(cmd):
+    global run_command_counter
+    log.debug(f"Command nr: {run_command_counter}")
+    run_command_counter = run_command_counter + 1
     output = cmd()
-    log.info(output)
+    # Also logs it with level info
+    log.info(f"{cmd} \nOutput: {output}")
     # TODO: Error handling?
+    return output
 
 
 def navigate_to(path):
-    log.info(f"chdir {path}")
+    log.debug(f"chdir {path}")
     os.chdir(path)
+
+
+def authenticated_subrepo_url():
+    """
+    PRE: Assumes repository is hosted on github and credentials are set in config.
+    :return: remote url which already contains username and PW to skip manual entries
+    """
+    parts = FEATURE_REMOTE_URL.split("github.com")
+    return parts[0] + f"{GITHUB_USERNAME}:{FEATURE_ACCESS_TOKEN}" + f"@github.com{parts[1]}"
 
 
 def branch_name(suffix):
@@ -49,7 +69,7 @@ def subrepo_name():
     may also be called <subrepo_dir> in the documentation but referred to the 'name' in discussions.
     :return:
     """
-    return path_diff(FEATURE_GIT_ROOT, configuration()["container_git_root"])
+    return path_diff(FEATURE_ROOT_PATH, CONTAINER_ROOT_PATH)
 
 
 def clean_subrepo():
@@ -57,9 +77,71 @@ def clean_subrepo():
     remove any erroneous commands. TODO: when else is this necessary?
     :return:
     """
-    navigate_to(configuration()["container_git_root"])
+    navigate_to(CONTAINER_ROOT_PATH)
     cmd = git["subrepo", SUBREPO_VERBOSITY, "clean", subrepo_name()]
-    run_command(cmd)
+    execute(cmd)
+
+
+def add_subrepo():
+    """
+    Adds any changes within the subrepository in the container and commits them.
+    Preserves working directory.
+    :return: True if changes were present and were successfully added, False otherwise
+    """
+    cwd = os.getcwd()
+    navigate_to(CONTAINER_ROOT_PATH)
+    output = execute(git["status"])
+    lines = output.split("\n")
+    change_present = False
+    for line in lines:
+        if "modified:" in line:
+            # used 'all' to avoid issues with varying separators in pathnames
+            if all([dirname in line for dirname in subrepo_name().split(os.sep)]):
+                change_present = True
+                log.info("Unstaged changes in subrepo, adding...")
+            else:
+                log.debug(f"all of {subrepo_name().split(os.sep)} not found in:\n {line}")
+        else:
+            log.debug(f"modified not found in:\n {line}")
+    if change_present:
+        # Doesn't matter if it was already added, change present will still be true
+        execute(git["add", os.path.join(subrepo_name(), "*")])
+        execute(git["commit", "-m", "changes in subrepository"])
+        # TODO: Error handling?
+    navigate_to(cwd)
+    return change_present
+
+
+def commit_subrepo(message):
+    """
+    adds and commits changes to subrepo if there are any
+    preserves cwd.
+    """
+    changes = add_subrepo()
+    if changes:
+        log.info("Committing staged subrepo changes...")
+        cwd = os.getcwd()
+        navigate_to(CONTAINER_ROOT_PATH)
+        execute(git["subrepo", "commit", "-m", message, subrepo_name()])
+        navigate_to(cwd)
+
+
+def push_subrepo(message: str):
+    """
+    push to current subrepository branch. Will add and commit with provided message.
+    preserves cwd.
+    :param: message: If working dir is clean, you may pass None for the message.
+    """
+    cwd = os.getcwd()
+    if message is not None:
+        commit_subrepo(message)
+    # Navigate to the root of the container and push the changes of the subrepository
+    navigate_to(CONTAINER_ROOT_PATH)
+    # Do a clean before attempting to push
+    clean_subrepo()
+    # Push the changes to the subrepository and log the generated output
+    execute(git["subrepo", SUBREPO_VERBOSITY, "-r", authenticated_subrepo_url(), "push", subrepo_name()])
+    navigate_to(cwd)
 
 
 def create_migration_branch(suffix=None):
@@ -68,13 +150,33 @@ def create_migration_branch(suffix=None):
     @see: https://github.com/ingydotnet/git-subrepo/blob/110b9eb13f259986fffcf11e8fb187b8cce50921/lib/git-subrepo#L731
     :param suffix: added to the 'migration' name if provided
     """
-    navigate_to(configuration()["container_git_root"])
-    #cmd = git["subrepo", SUBREPO_VERBOSITY, "branch", branch_name(suffix), "update_wanted=true"]
-    #cmd = git["subrepo", SUBREPO_VERBOSITY, "branch", subrepo_name()]
-    #cmd = git["subrepo", "pull", subrepo_name(), "-b", branch_name(suffix), "--force"]
-    # first create a new remote branch
-    cmd = git["subrepo", "clone", "--force", "-b", branch_name(suffix), FEATURE_REMOTE_URL]
-    run_command(cmd)
+    # First we make sure that any trailing changes on subrepo master are pushed to remote
+    push_subrepo(f"Push before creating {branch_name(suffix)}")
+    # create migration branch on remote
+    #create_new_remote_subrepo_branch(branch_name(suffix))
+
+
+def create_new_remote_subrepo_branch(branchname):
+    """
+    Checkout master branch of subrepo in temporary location.
+    Use generic Git to create, checkout and push new branch to remote.
+    Remove local copy of subrepo.
+    :param branchname: How to call the new branch branch
+    """
+    navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
+    # Idempotence
+    if os.path.isdir(FEATURE_TMP_DIRNAME):
+        execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
+    execute(local["mkdir"][FEATURE_TMP_DIRNAME])
+    navigate_to(FEATURE_TMP_DIRNAME)
+    # Create url containing username and pw for cloning
+    execute(git["clone", GIT_VERBOSITY, authenticated_subrepo_url()])
+    output = execute(local["ls"])
+    navigate_to(output.strip())
+    execute(git["checkout", "-b", branchname])
+    execute(git["push", "--set-upstream", "origin", branchname])
+    navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
+    execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
 
 
 def merge_migration_branch(suffix=None):
@@ -84,13 +186,13 @@ def merge_migration_branch(suffix=None):
     @see https://github.com/ingydotnet/git-subrepo/blob/110b9eb13f259986fffcf11e8fb187b8cce50921/lib/git-subrepo.d/help-functions.bash#L71
     :return:
     """
-    navigate_to(configuration()["container_git_root"])
+    navigate_to(CONTAINER_ROOT_PATH)
 
     # Check preconditions
-    if not os.path.isdir(FEATURE_GIT_ROOT):
+    if not os.path.isdir(FEATURE_ROOT_PATH):
         log.critical("Subrepository missing from container. Attempted migration branch merge aborted.")
         exit(1)
-    with open(os.path.join(FEATURE_GIT_ROOT), ".gitrepo") as f:
+    with open(os.path.join(FEATURE_ROOT_PATH), ".gitrepo") as f:
         lines = f.readlines()
     idx = 0
     while "branch" not in lines[idx]:
@@ -100,48 +202,40 @@ def merge_migration_branch(suffix=None):
         log.critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
         exit(1)
 
-    cmd = git["subrepo", "clone", f"--branch={branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_GIT_ROOT]
-    run_command(cmd)
-
-
-def push_subrepo():
-    # Navigate to the root of the container and push the changes of the subrepository
-    navigate_to(configuration()["container_git_root"])
-    # Push the changes to the subrepository and log the generated output
-    cmd = git["subrepo", SUBREPO_VERBOSITY, "push", FEATURE_GIT_ROOT]
-    run_command(cmd)
+    cmd = git["subrepo", "clone", f"--branch={branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_ROOT_PATH]
+    execute(cmd)
 
 
 def pull_subrepo():
     # Navigate to the root of the container and pull the changes of the subrepository
     # Fast forward is attempted and command aborted if this fails.
-    navigate_to(configuration()["container_git_root"])
+    navigate_to(CONTAINER_ROOT_PATH)
     # Push the changes to the subrepository and log the generated output
-    cmd = git["subrepo", SUBREPO_VERBOSITY, "pull", FEATURE_GIT_ROOT]
-    run_command(cmd)
+    cmd = git["subrepo", SUBREPO_VERBOSITY, "pull", FEATURE_ROOT_PATH]
+    execute(cmd)
     # TODO: Error handling?
 
 
 def pull_container():
     # TODO: add the option to be much more specific with the new version you want, tags etc...
     log.info("Pulling container...")
-    navigate_to(configuration()["container_git_root"])
+    navigate_to(CONTAINER_ROOT_PATH)
     cmd = git["pull"]
-    run_command(cmd)
+    execute(cmd)
 
 
 def embed_subpreo():
     # This will clear/create the embedded feature directory
     # and freshly clone the subrepository into this space.
     # Clear and recreate subrepo root
-    if os.path.isdir(FEATURE_GIT_ROOT):
-        run_command(local["rm"]["-r", FEATURE_GIT_ROOT])
-    run_command(local["mkdir"][FEATURE_GIT_ROOT])
-    navigate_to(FEATURE_GIT_ROOT)
+    if os.path.isdir(FEATURE_ROOT_PATH):
+        execute(local["rm"]["-r", FEATURE_ROOT_PATH])
+    execute(local["mkdir"][FEATURE_ROOT_PATH])
+    navigate_to(FEATURE_ROOT_PATH)
     # fresh clone
-    run_command(git["subrepo", SUBREPO_VERBOSITY, "clone", FEATURE_REMOTE_URL])
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", FEATURE_REMOTE_URL])
 
 
 def initialize_subrepo():
-    navigate_to(FEATURE_GIT_ROOT)
-    run_command(git["subrepo", SUBREPO_VERBOSITY, "init"])
+    navigate_to(FEATURE_ROOT_PATH)
+    execute(git["subrepo", SUBREPO_VERBOSITY, "init"])

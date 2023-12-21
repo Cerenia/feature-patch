@@ -6,8 +6,8 @@ from featurePatch.git import *
 
 def main():
     #extract_feature()
-    #clean_subrepo()
-    create_migration_branch()
+    clean_subrepo()
+    create_migration_branch("test")
 
 
 if __name__ == '__main__':
