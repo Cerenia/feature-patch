@@ -127,7 +127,7 @@ def path_diff(long_path: str, short_path: str, tail=True):
         short_path = C:Users/usr/myGreatPath
         result = subdir/myfile.txt
 
-    Example front:
+    Example start:
         long_path = myGreatPath/subdir/myfile.txt
         short_path = myfile.txt
         result = myGreatPath/subdir

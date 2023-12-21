@@ -6,6 +6,7 @@ from featurePatch.git import *
 
 def main():
     #extract_feature()
+    #clean_subrepo()
     create_migration_branch()
 
 
