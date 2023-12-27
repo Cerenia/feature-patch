@@ -5,6 +5,7 @@
 # https://github.com/ingydotnet/git-subrepo/blob/master/lib/git-subrepo.d/help-functions.bash
 # Unfortunately the documentation is not complete and wrong in places, links to the locations of the bash functions
 # in the repo are provided when reading the source proved necessary.
+# subrepo expects a bash shell. We make sure to map all paths to POSIX paths in this file to avoid confusions.
 import os
 from plumbum import local
 from .util import configuration, constants, path_diff
@@ -30,6 +31,72 @@ GIT_VERBOSITY = configuration()["git_verbosity"]
 
 run_command_counter = 1
 
+###
+#
+# Helpers
+#
+###
+
+
+def path_join(first_path, second_path):
+    """
+        We write our own since python cleverness leads to weirdness when emulating POSIX under Windows.
+        We only support POSIX style paths for simplicity.
+        PRE: Any backslashes in the paths are treated as a critical error.
+    :param first_path: First half of the path, can't contain backslashes
+    :param second_path: Second half of the path, can't contain backslashes
+    :return: a string representing the joined path
+    """
+    error_msg = "{path} contained unsupported '\\' character"
+    if "\\" in first_path:
+        log.critical(error_msg.format(path=first_path))
+        exit(1)
+    if "\\" in second_path:
+        log.critical(error_msg.format(path=second_path))
+        exit(1)
+    if "/" == first_path[-1]:
+        trailing_slash = True
+    else:
+        trailing_slash = False
+    if "/" == second_path[0]:
+        starting_slash = True
+    else:
+        starting_slash = False
+    if not trailing_slash and not starting_slash:
+        return first_path + "/" + second_path
+    if not trailing_slash and starting_slash or trailing_slash and not starting_slash:
+        return first_path + second_path
+    else:  # both slashes present
+        return first_path[0:-1] + second_path
+
+
+def map_path(path, to_posix=False):
+    """
+      Maps paths between POSIX and windows compliance. Will check the 'windows' configuration Bit to determine if a
+      change is needed.
+    :param path: The path to transform.
+    :param to_posix: Ignore windows configuration bit and transform windows -> POSIX
+    :return: the transformed path
+    """
+    if to_posix:
+        path = path.replace("\\", "/")
+        path = path.replace("C:", "\\c\\")
+    elif configuration()["windows"]:
+        # remap path
+        path = path.replace("/", "\\")
+        path = path.replace("\\c\\", "C:")
+    return path
+
+
+def chdir(path):
+    path = map_path(path)
+    os.chdir(path)
+
+
+def isdir(path):
+    path = map_path(path)
+    return os.path.isdir(path)
+
 
 def execute(cmd):
     global run_command_counter
@@ -44,7 +111,13 @@ def execute(cmd):
 
 def navigate_to(path):
     log.debug(f"chdir {path}")
-    os.chdir(path)
+    chdir(path)
+
+###
+#
+# \Helpers
+#
+###
 
 
 def authenticated_subrepo_url():
@@ -69,7 +142,7 @@ def subrepo_name():
     may also be called <subrepo_dir> in the documentation but referred to the 'name' in discussions.
     :return:
     """
-    return path_diff(FEATURE_ROOT_PATH, CONTAINER_ROOT_PATH)
+    return path_diff(map_path(FEATURE_ROOT_PATH, True), map_path(CONTAINER_ROOT_PATH, True), "/")
 
 
 def clean_subrepo():
@@ -96,16 +169,16 @@ def add_subrepo():
     for line in lines:
         if "modified:" in line:
             # used 'all' to avoid issues with varying separators in pathnames
-            if all([dirname in line for dirname in subrepo_name().split(os.sep)]):
+            if all([dirname in line for dirname in subrepo_name().split("/")]):
                 change_present = True
                 log.info("Unstaged changes in subrepo, adding...")
             else:
-                log.debug(f"all of {subrepo_name().split(os.sep)} not found in:\n {line}")
+                log.debug(f"all of {subrepo_name().split('/')} not found in:\n {line}")
         else:
             log.debug(f"modified not found in:\n {line}")
     if change_present:
         # Doesn't matter if it was already added, change present will still be true
-        execute(git["add", os.path.join(subrepo_name(), "*")])
+        execute(git["add", path_join(subrepo_name(), "*")])
         execute(git["commit", "-m", "changes in subrepository"])
         # TODO: Error handling?
     navigate_to(cwd)
@@ -165,7 +238,7 @@ def create_new_remote_subrepo_branch(branchname):
     """
     navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
     # Idempotence
-    if os.path.isdir(FEATURE_TMP_DIRNAME):
+    if isdir(FEATURE_TMP_DIRNAME):
         execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
     execute(local["mkdir"][FEATURE_TMP_DIRNAME])
     navigate_to(FEATURE_TMP_DIRNAME)
@@ -189,10 +262,10 @@ def merge_migration_branch(suffix=None):
     navigate_to(CONTAINER_ROOT_PATH)
 
     # Check preconditions
-    if not os.path.isdir(FEATURE_ROOT_PATH):
+    if not isdir(FEATURE_ROOT_PATH):
         log.critical("Subrepository missing from container. Attempted migration branch merge aborted.")
         exit(1)
-    with open(os.path.join(FEATURE_ROOT_PATH), ".gitrepo") as f:
+    with open(path_join(FEATURE_ROOT_PATH), ".gitrepo") as f:
         lines = f.readlines()
     idx = 0
     while "branch" not in lines[idx]:
@@ -228,7 +301,7 @@ def embed_subpreo():
     # This will clear/create the embedded feature directory
     # and freshly clone the subrepository into this space.
     # Clear and recreate subrepo root
-    if os.path.isdir(FEATURE_ROOT_PATH):
+    if isdir(FEATURE_ROOT_PATH):
         execute(local["rm"]["-r", FEATURE_ROOT_PATH])
     execute(local["mkdir"][FEATURE_ROOT_PATH])
     navigate_to(FEATURE_ROOT_PATH)

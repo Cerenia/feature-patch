@@ -116,7 +116,7 @@ def error_record_path():
     return os.path.join(configuration()["working_dir"], "errors.txt")
 
 
-def path_diff(long_path: str, short_path: str, tail=True):
+def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
     """
     Returns the difference in both paths, and removes a trailing os path separator if necessary.
     By default, the method first attempts to find the diff at the tail of long_path.
@@ -139,13 +139,14 @@ def path_diff(long_path: str, short_path: str, tail=True):
 
     you can change the order of search by passing tail=False
 
-    :param long_path: The first path to diff against. long_path must be longer than short_path
-    :param short_path: The second path to diff against (may also be a filename)
+    :param long_path: The first path to diff against. long_path must be longer than short_path, can't contain backslashes
+    :param short_path: The second path to diff against (may also be a filename), can't contain backslashes
     :param tail: Defines preferred diff location if the split happens to be mid path.
     :return: A path sequence that can directly be used with os.path.join.
     """
-
-    assert len(long_path) > len(short_path)
+    if len(long_path) < len(short_path):
+        log.critical(f"Precondition violation. Long path: {long_path} was shorter than: {short_path}.")
+        exit(1)
 
     parts = long_path.split(short_path)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
@@ -154,8 +155,8 @@ def path_diff(long_path: str, short_path: str, tail=True):
         diff = useful_parts[-1]
     else:
         diff = useful_parts[0]
-    if diff[0] == os.sep:
+    if diff[0] == sep:
         diff = diff[1:]
-    if diff[-1] == os.sep:
+    if diff[-1] == sep:
         diff = diff[0:-2]
     return diff
