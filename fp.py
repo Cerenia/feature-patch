@@ -8,7 +8,7 @@ def main():
     #clean_subrepo()
     #create_migration_branch("test")
     # checkout branch
-    embed_subpreo("test")
+    embed_subpreo(branch_name("test"))
     #extract_feature()
 
 

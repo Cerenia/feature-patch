@@ -297,17 +297,15 @@ def pull_container():
     execute(cmd, pull_container.__name__)
 
 
-def embed_subpreo(branchname="main"):
-    # This will clear/create the embedded feature directory
-    # and freshly clone the subrepository into this space.
-    # Clear and recreate subrepo root
-    if isdir(FEATURE_ROOT_PATH):
-        execute(local["rm"]["-r", FEATURE_ROOT_PATH], embed_subpreo.__name__)
-    execute(local["mkdir"][FEATURE_ROOT_PATH], embed_subpreo.__name__)
-    navigate_to(FEATURE_ROOT_PATH)
-    # fresh clone
-    # TODO: fix which branch is cloned
-    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", branchname, FEATURE_REMOTE_URL], embed_subpreo.__name__)
+def embed_subpreo(branchname):
+    """
+    Clone different branch of subrepository into container.
+    PRE: Clean working tree.
+    :param branchname: which branch to switch to
+    :return:
+    """
+    navigate_to(CONTAINER_ROOT_PATH)
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", branchname, authenticated_subrepo_url()], embed_subpreo.__name__)
 
 
 def initialize_subrepo():
