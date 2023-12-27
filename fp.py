@@ -5,9 +5,11 @@ from featurePatch.git import *
 
 
 def main():
+    #clean_subrepo()
+    #create_migration_branch("test")
+    # checkout branch
+    embed_subpreo("test")
     #extract_feature()
-    clean_subrepo()
-    create_migration_branch("test")
 
 
 if __name__ == '__main__':
