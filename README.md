@@ -26,4 +26,13 @@ The utility can be configured with the cli with the following command:
 
 Which will 
 
+
+
+## Prerequisites
+
+- Mark any code you insert with the marker
+- Whole files to be inserted should have a marker pair as the first comment of the file
+- The smaller you can keep the interface the better
+
+
 TODO: Keep updating README
