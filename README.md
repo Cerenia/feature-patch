@@ -1,6 +1,7 @@
 # feature-patch
 Utility to facilitate patching a dangling feature onto evolving Codebases
 
+- terminology
 
 ## Installation
 
@@ -26,7 +27,9 @@ The utility can be configured with the cli with the following command:
 
 Which will 
 
+## Testing
 
+- Document Simpill and Simpill-subrepo
 
 ## Prerequisites
 

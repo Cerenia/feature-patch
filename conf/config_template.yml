@@ -1,3 +1,30 @@
-# User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are TODO: configurable by the cli or through manual editing
-feature_git_root: ''
-android_src_root: C:Users\user\path\to\the\android\src\code\folder
+### User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are TODO: configurable by the cli or through manual editing
+# The top level directory path containing the Android source code
+android_src_root: TODO
+# Directory paths to layouts, drawables, strings
+android_layout_root: TODO
+android_drawable_root: TODO
+android_string_root: TODO
+# The top level directory of the container Application project
+container_git_root: TODO
+# The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_layout_root>)
+feature_git_root: TODO
+# A directory in which the feature repository will be checked out for automated git operations. Should have write access.
+feature_git_temp_root: TODO
+# https url (e.g., Github) of the feature
+feature_git_remote: TODO
+# Used to automate branching to remote for migration
+github_username: TODO
+# Strongly recommended to create a fine grained token that only provides access to the feature repository, as this will show up in local logs and bash history.
+feature_github_access_token: TODO
+# The marker used in the container wherever feature code is integrated. Used to extract the contact points.
+marker: TODO
+# The path to *this* directory
+python_root: TODO
+working_dir: TODO
+# Flag to pass to git subrepo, reflected in logging
+subrepo_verbosity: TODO
+# Flag for Git
+git_verbosity: TODO
+# indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
+windows: TODO

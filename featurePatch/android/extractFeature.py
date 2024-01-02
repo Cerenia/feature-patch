@@ -54,6 +54,7 @@ def extract_files():
     duplicate_files(subrepo_path(), src_layout_folder(), None, target_layout_folder())
     duplicate_files(subrepo_path(), src_drawable_folder(), None, target_drawable_folder())
     duplicate_files(subrepo_path(), src_string_folder(), None, target_string_folder())
+    # TODO: manifest
 
 
 def duplicate_files(subrep_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):

@@ -94,18 +94,27 @@ def add_to_config_template():
     """
      Run whenever you add a configuration variable, expects ..\conf\config.yml will modify ..\conf\config_template.yml additively
      Deleting flags should be done manually (for now)
+     PRE: Expects to run from repository root
     :return:
     """
     log.info("Editing configuration template...")
-    conf = configuration()
     with open("./conf/config_template.yml", "r") as f:
         conf_template = yaml.safe_load(f)
-    for key in conf:
-        if key not in conf_template.keys():
-            log.info(f"Adding confguration item '{key}'")
-            conf_template[key] = ""
+    with open("./conf/config.yml", "r") as f:
+        configuration_lines = f.readlines()
+    template_lines = []
+    for line in configuration_lines:
+        if "#" in line:
+            template_lines.append(line)
+        else:
+            element = yaml.safe_load(line)
+            key = next(iter(element.keys()))
+            if key not in conf_template.keys():
+                log.info(f"Adding configuration item '{key}'")
+            element[key] = "TODO"
+            template_lines.append(yaml.safe_dump(element))
     with open("./conf/config_template.yml", "w") as f:
-        yaml.dump(conf_template, f)
+        f.writelines(template_lines)
 
 
 def validate_config():
