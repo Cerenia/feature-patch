@@ -108,6 +108,14 @@ def add_to_config_template():
         yaml.dump(conf_template, f)
 
 
+def validate_config():
+    """
+    TODO: implement
+    Check any known dependencies in the configurations before starting scripts.
+    :return:
+    """
+    pass
+
 def runtime_record_path():
     return os.path.join(configuration()["working_dir"], "runtime_record.txt")
 

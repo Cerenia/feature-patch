@@ -130,7 +130,7 @@ def authenticated_subrepo_url():
     return parts[0] + f"{GITHUB_USERNAME}:{FEATURE_ACCESS_TOKEN}" + f"@github.com{parts[1]}"
 
 
-def branch_name(suffix):
+def migration_branch_name(suffix):
     if suffix is not None:
         suffix = "_" + suffix
     else:
@@ -140,7 +140,7 @@ def branch_name(suffix):
 
 def subrepo_name():
     """
-    may also be called <subrepo_dir> in the documentation but referred to the 'name' in discussions.
+    may also be called <subrepo_dir> in the git subrepo documentation but referred to the 'name' in discussions.
     :return:
     """
     return path_diff(map_path(FEATURE_ROOT_PATH, True), map_path(CONTAINER_ROOT_PATH, True), "/")
@@ -225,9 +225,9 @@ def create_migration_branch(suffix=None):
     :param suffix: added to the 'migration' name if provided
     """
     # First we make sure that any trailing changes on subrepo master are pushed to remote
-    push_subrepo(f"Push before creating {branch_name(suffix)}")
+    push_subrepo(f"Push before creating {migration_branch_name(suffix)}")
     # create migration branch on remote
-    create_remote_subrepo_branch(branch_name(suffix))
+    create_remote_subrepo_branch(migration_branch_name(suffix))
 
 
 def create_remote_subrepo_branch(branchname):
@@ -276,7 +276,7 @@ def merge_migration_branch(suffix=None):
         log.critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
         exit(1)
 
-    cmd = git["subrepo", "clone", f"--branch={branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_ROOT_PATH]
+    cmd = git["subrepo", "clone", f"--branch={migration_branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_ROOT_PATH]
     execute(cmd)
 
 
