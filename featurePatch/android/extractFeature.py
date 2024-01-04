@@ -13,9 +13,9 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path, path_diff, log
+from ..util import configuration, contact_points_path, subrepo_path, path_diff, log, constants
 from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
-from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder
+from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, execute
 
 import os
 
@@ -48,36 +48,37 @@ def extract_files():
     """
     Walk through expected file hierarchy and find all files that contain the string marker in configs
     Assumes Code to be in <feature_git_root>/..
+    Additionally checks the AndroidManifest file.
     :return:
     """
     duplicate_files(subrepo_path(), src_code_folder(), None, target_code_folder())
     duplicate_files(subrepo_path(), src_layout_folder(), None, target_layout_folder())
     duplicate_files(subrepo_path(), src_drawable_folder(), None, target_drawable_folder())
     duplicate_files(subrepo_path(), src_string_folder(), None, target_string_folder())
-    # TODO: manifest
+    duplicate_manifest()
 
 
-def duplicate_files(subrep_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
+def duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
     """
         recursively walks through current dir and copies any file that contains the marker into
-    :param subrep_path: path of the subrepo inside the container
+    :param subrepo_path: path of the subrepo inside the container
     :param top_level_source_dir: where the files are expected to be listed (code, drawables, strings, layouts..)
     :param current_dir: recursive directory helper, set to topLevelDir if None
-    :param get_top_level_target_dir: pass the function handle for the target folder
+    :param top_level_target_dir: pass the function handle for the target folder
     """
     if current_dir is None:
         current_dir = top_level_source_dir
     for f_name in os.listdir(current_dir):
         f_path = os.path.join(current_dir, f_name)
-        if f_name != os.path.basename(subrep_path):
+        if f_name != os.path.basename(subrepo_path):
             if os.path.isdir(f_path):
                 log.debug(f"Traversing into {f_name}")
-                duplicate_files(subrep_path, top_level_source_dir, f_path, top_level_target_dir)
+                duplicate_files(subrepo_path, top_level_source_dir, f_path, top_level_target_dir)
             elif os.path.isfile(f_path):
                 log.debug(f"Checking {f_name} for marker")
                 # if retcode == 1, no match was found
                 cmd = (local['cat'][f_path] | local['grep'][configuration()["marker"]])
-                (retcode, stdout, _) = cmd.run(retcode=(0, 1))
+                (retcode, stdout) = execute(cmd, retcode=(0, 1))
                 if retcode == 0:
                     src = os.path.join(current_dir, f_name)
                     if not check_marker_matchings(src):
@@ -98,6 +99,28 @@ def duplicate_files(subrep_path: str, top_level_source_dir: str, current_dir: st
                     local['cp'][src, trg]()
             else:
                 log.error(f"{f_name} was not dir or file!")
+
+
+def manifest_path():
+    src_path = configuration()["android_src_root"]
+    if "main" not in src_path:
+        log.critical(f"'main' not found in {src_path}. Invalid 'android_src_root' value in configuration!")
+        exit(1)
+    return os.path.join(src_path.split("main")[0], "main", constants()["android_manifest_file"])
+
+
+def duplicate_manifest():
+    """
+    Checks manifest file for marker and duplicates it if necessary.
+    """
+    log.debug(f"Checking {manifest_path()} for marker")
+    # if retcode == 1, no match was found
+    cmd = (local['cat'][manifest_path()] | local['grep'][configuration()["marker"]])
+    (retcode, stdout) = execute(cmd, retcode=(0, 1))
+    if retcode == 0:
+        log.info(f"Copying manifest into {contact_points_path()}...")
+        cmd = local['cp'][manifest_path(), os.path.join(contact_points_path(), constants()['android_manifest_file'])]
+        execute(cmd)
 
 
 def check_marker_matchings(file: str):

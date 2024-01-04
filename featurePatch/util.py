@@ -1,3 +1,4 @@
+import inspect
 import yaml
 import os
 from .log import log
@@ -5,6 +6,7 @@ from .log import log
 config: dict = None
 const: dict = None
 conf_path = None
+run_command_counter = 1
 
 
 def init_cygwin():
@@ -13,6 +15,32 @@ def init_cygwin():
         # TODO: (for plumbum) extract to configs once structure is clearer. or just don't use plumbum :(
             os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
     )
+
+
+def execute(cmd, retcode=None):
+    """
+    Executes and logs a plumbum command.
+    See: https://plumbum.readthedocs.io/en/latest/local_commands.html
+    If anything is passed for retcode, returns:
+        retcode, stdout
+    else returns:
+        stdout
+    :param cmd: the plumbum command to execute
+    :param retcode:
+    :return: retcode, stdout OR stdout
+    """
+    global run_command_counter
+    log.debug(f"Command nr: {run_command_counter}")
+    run_command_counter = run_command_counter + 1
+    (retcode, stdout, _) = cmd.run(retcode)
+    # inspect.stack()[1][3] is the name of the calling function
+    # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+    log.info(f"{inspect.stack()[1][3]}: \n{cmd} \nOutput: {stdout}")
+    # TODO: Error handling?
+    if retcode is None:
+        return stdout
+    else:
+        return retcode, stdout
 
 
 def set_conf_path(path):

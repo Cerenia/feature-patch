@@ -8,7 +8,7 @@
 # subrepo expects a bash shell. We make sure to map all paths to POSIX paths in this file to avoid confusions.
 import os, inspect
 from plumbum import local
-from .util import configuration, constants, path_diff
+from .util import configuration, constants, path_diff, execute
 from .log import log
 
 git = local['git']
@@ -29,11 +29,10 @@ CONTAINER_ROOT_PATH = configuration()["container_git_root"]
 GITHUB_USERNAME = configuration()["github_username"]
 GIT_VERBOSITY = configuration()["git_verbosity"]
 
-run_command_counter = 1
-
 ###
 #
-# Helpers
+# Helpers:
+# because git subrepo expects to run in a bash shell we need to make sure the paths are POSIX compliant
 #
 ###
 
@@ -96,18 +95,6 @@ def chdir(path):
 def isdir(path):
     path = map_path(path)
     return os.path.isdir(path)
-
-
-def execute(cmd):
-    global run_command_counter
-    log.debug(f"Command nr: {run_command_counter}")
-    run_command_counter = run_command_counter + 1
-    output = cmd()
-    # inspect.stack()[1][3] is the name of the calling function
-    # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-    log.info(f"{inspect.stack()[1][3]}: \n{cmd} \nOutput: {output}")
-    # TODO: Error handling?
-    return output
 
 
 def navigate_to(path):
