@@ -40,7 +40,7 @@ Assumption: patch files have been written in such a way as to minimize the inter
 
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
-from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder
+from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
 from ..util import runtime_record_path, error_record_path, path_diff, log, configuration
 import os
 import json
@@ -63,13 +63,16 @@ def match_files(subrepo_dir: str, container_dir: str):
             diff = path_diff(filepath, subrepo_dir)
             match = os.path.join(container_dir, diff)
             if os.path.isfile(match):
-                print(f"Found matching {diff} in container repository!")
-                with open(runtime_record_path(), 'a') as f:
-                    f.write(f"{format_runtime_task(filepath, match)},\n")
+                create_runtime_entry(diff, filepath, match)
             else:
                 write_error(f"ERROR: {diff} was not found in container repository, please check this file manually.",
                             filepath, log.error)
 
+
+def create_runtime_entry(diff, filepath, match):
+    log.info(f"Found matching {diff} in container repository!")
+    with open(runtime_record_path(), 'a') as f:
+        f.write(f"{format_runtime_task(filepath, match)},\n")
 
 def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
     """
@@ -116,6 +119,9 @@ def initiate_runtime_log():
     match_files(target_drawable_folder(), src_drawable_folder())
     match_files(target_string_folder(), src_string_folder())
     match_files(target_layout_folder(), src_layout_folder())
+    # Manifest
+    if os.path.isfile(manifest_path(subrepo_path=True)):
+        create_runtime_entry("AndroidManifest.xml", manifest_path(subrepo_path=True), manifest_path())
 
     # Close Json Array Literal
     for path in [runtime_record_path, error_record_path]:

@@ -1,5 +1,5 @@
 import os
-from ..util import contact_points_path, configuration
+from ..util import contact_points_path, configuration, constants, log
 
 
 def target_code_folder():
@@ -32,3 +32,18 @@ def src_drawable_folder():
 
 def src_string_folder():
     return configuration()['android_string_root']
+
+
+def manifest_path(subrepo_path=False):
+    """
+        Returns the expected path for the manifest file.
+    :param subrepo_path: Returns the path inside of the 'contact_points' folder instead of the path of the file in the container.
+    :return: 
+    """
+    if subrepo_path:
+        return os.path.join(contact_points_path(), constants()['android_manifest_file'])
+    src_path = configuration()["android_src_root"]
+    if "main" not in src_path:
+        log.critical(f"'main' not found in {src_path}. Invalid 'android_src_root' value in configuration!")
+        exit(1)
+    return os.path.join(src_path.split("main")[0], "main", constants()["android_manifest_file"])

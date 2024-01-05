@@ -13,17 +13,17 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path, path_diff, log, constants
+from ..util import configuration, contact_points_path, subrepo_path, path_diff, log, constants, execute
 from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
-from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, execute
+from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, manifest_path
 
 import os
 
 
-def prep_folders(windows=False):
+def prep_folders():
     """
     Clears/Creates target folders in the subrepo to later be filled with all files of contact
-    expects to be run in bash shell (TODO: add a Windows flag + any changed commands?)
+    expects to be run in bash shell
     :return:
     """
 
@@ -31,17 +31,16 @@ def prep_folders(windows=False):
     string_path = target_string_folder()
     drawable_path = target_drawable_folder()
     code_path = target_code_folder()
-    if not windows:
-        mkdir = local['mkdir']
-        rm = local['rm']
-        log.info("Clearing/creating layout, string, drawable, code directories at:")
-        log.info(contact_points_path())
-        rm["-r", "-v", "-f", contact_points_path()]()
-        mkdir[contact_points_path()]()
-        mkdir[layout_path]()
-        mkdir[string_path]()
-        mkdir[drawable_path]()
-        mkdir[code_path]()
+    mkdir = local['mkdir']
+    rm = local['rm']
+    log.info("Clearing/creating layout, string, drawable, code directories at:")
+    log.info(contact_points_path())
+    rm["-r", "-v", "-f", contact_points_path()]()
+    mkdir[contact_points_path()]()
+    mkdir[layout_path]()
+    mkdir[string_path]()
+    mkdir[drawable_path]()
+    mkdir[code_path]()
 
 
 def extract_files():
@@ -101,14 +100,6 @@ def duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: s
                 log.error(f"{f_name} was not dir or file!")
 
 
-def manifest_path():
-    src_path = configuration()["android_src_root"]
-    if "main" not in src_path:
-        log.critical(f"'main' not found in {src_path}. Invalid 'android_src_root' value in configuration!")
-        exit(1)
-    return os.path.join(src_path.split("main")[0], "main", constants()["android_manifest_file"])
-
-
 def duplicate_manifest():
     """
     Checks manifest file for marker and duplicates it if necessary.
@@ -119,7 +110,7 @@ def duplicate_manifest():
     (retcode, stdout) = execute(cmd, retcode=(0, 1))
     if retcode == 0:
         log.info(f"Copying manifest into {contact_points_path()}...")
-        cmd = local['cp'][manifest_path(), os.path.join(contact_points_path(), constants()['android_manifest_file'])]
+        cmd = local['cp'][manifest_path(), manifest_path(subrepo_path=True)]
         execute(cmd)
 
 
