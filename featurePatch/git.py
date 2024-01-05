@@ -135,7 +135,7 @@ def subrepo_name():
 
 def clean_subrepo():
     """
-    remove any erroneous commands. TODO: when else is this necessary?
+    remove any erroneous commands.
     :return:
     """
     navigate_to(CONTAINER_ROOT_PATH)
@@ -286,21 +286,34 @@ def pull_container():
 
 
 def upgrade_container_to(tag, main_branch_name="main"):
+    """
+        Fetches all tags and creates a branch for that tag. Merges main up to this tag and checks out the newly created branch.
+    :param tag: Which tag to upgrade to.
+    :param main_branch_name: Name of the main branch.
+    :return:
+    """
     log.info(f"Updating container to tag: {tag}")
     # checkout main
     navigate_to(CONTAINER_ROOT_PATH)
     execute(git["checkout", main_branch_name])
+    execute(git["fetch", "--all", "--tags"])
+    # Create new branch for this version
+    execute(git["checkout", f"tags/{tag}", "-b", tag])
+    # Merge into main branch to note latest sync.
+    execute(git["checkout", main_branch_name])
+    execute(git["merge", tag])
+    execute(git["checkout", tag])
 
 
-def embed_subpreo(branchname):
+def embed_subpreo(subrepo_branch):
     """
     Clone different branch of subrepository into container.
     PRE: Clean working tree.
-    :param branchname: which branch to switch to
+    :param subrepo_branch: which branch to switch to
     :return:
     """
     navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", branchname, authenticated_subrepo_url()])
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", subrepo_branch, authenticated_subrepo_url()])
 
 
 def initialize_subrepo():
