@@ -77,7 +77,7 @@ def duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: s
                 log.debug(f"Checking {f_name} for marker")
                 # if retcode == 1, no match was found
                 cmd = (local['cat'][f_path] | local['grep'][configuration()["marker"]])
-                (retcode, stdout) = execute(cmd, retcode=(0, 1))
+                (retcode, stdout, _) = execute(cmd, retcodes=(0, 1))
                 if retcode == 0:
                     src = os.path.join(current_dir, f_name)
                     if not check_marker_matchings(src):
@@ -107,7 +107,7 @@ def duplicate_manifest():
     log.debug(f"Checking {manifest_path()} for marker")
     # if retcode == 1, no match was found
     cmd = (local['cat'][manifest_path()] | local['grep'][configuration()["marker"]])
-    (retcode, stdout) = execute(cmd, retcode=(0, 1))
+    (retcode, _, _) = execute(cmd, retcodes=(0, 1))
     if retcode == 0:
         log.info(f"Copying manifest into {contact_points_path()}...")
         cmd = local['cp'][manifest_path(), manifest_path(subrepo_path=True)]
@@ -119,7 +119,7 @@ def check_marker_matchings(file: str):
     :param file: The path of the file to examine
     :return: true is there is an equal nr. of starts and ends (does not catch missorderings)
     """
-    with open(file, "r") as f:
+    with open(file, "r", encoding="utf-8") as f:
         lines = f.readlines()
     starts = 0
     ends = 0

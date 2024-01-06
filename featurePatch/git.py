@@ -305,15 +305,15 @@ def upgrade_container_to(tag, main_branch_name="main"):
     execute(git["checkout", tag])
 
 
-def embed_subpreo(subrepo_branch):
+def checkout_subprepo(subrepo_branch):
     """
-    Clone different branch of subrepository into container.
+    Checkout different branch of subrepository.
     PRE: Clean working tree.
     :param subrepo_branch: which branch to switch to
     :return:
     """
     navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", subrepo_branch, authenticated_subrepo_url()])
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", subrepo_branch, authenticated_subrepo_url(), subrepo_name()])
 
 
 def initialize_subrepo():

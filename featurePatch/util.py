@@ -17,30 +17,29 @@ def init_cygwin():
     )
 
 
-def execute(cmd, retcode=None):
+def execute(cmd, retcodes=None):
     """
     Executes and logs a plumbum command.
     See: https://plumbum.readthedocs.io/en/latest/local_commands.html
-    If anything is passed for retcode, returns:
-        retcode, stdout
+    If anything is passed for expected retcodes, returns:
+        retcode, stdout, stderr
     else returns:
         stdout
     :param cmd: the plumbum command to execute
-    :param retcode:
-    :return: retcode, stdout OR stdout
+    :param retcodes: None or a tuple of accepted return codes
+    :return: retcode, stdout, stderr OR stdout
     """
     global run_command_counter
-    log.debug(f"Command nr: {run_command_counter}")
+    log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
     run_command_counter = run_command_counter + 1
-    (retcode, stdout, _) = cmd.run(retcode)
+    (rc, stdout, stderr) = cmd.run(retcode=retcodes)
     # inspect.stack()[1][3] is the name of the calling function
     # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-    log.info(f"{inspect.stack()[1][3]}: \n{cmd} \nOutput: {stdout}")
-    # TODO: Error handling?
-    if retcode is None:
+    log.info(f"function:{inspect.stack()[1][3]} \n{cmd} \nOutput:\n {stdout}")
+    if retcodes is None:
         return stdout
     else:
-        return retcode, stdout
+        return rc, stdout, stderr
 
 
 def set_conf_path(path):
@@ -152,6 +151,7 @@ def validate_config():
     :return:
     """
     pass
+
 
 def runtime_record_path():
     return os.path.join(configuration()["working_dir"], "runtime_record.txt")
