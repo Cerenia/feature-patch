@@ -65,6 +65,7 @@ def match_files(subrepo_dir: str, container_dir: str):
             if os.path.isfile(match):
                 create_runtime_entry(diff, filepath, match)
             else:
+                # TODO: Add a check for 'no content between markings' => then you can just copy the file
                 write_error(f"ERROR: {diff} was not found in container repository, please check this file manually.",
                             filepath, log.error)
 
@@ -73,6 +74,7 @@ def create_runtime_entry(diff, filepath, match):
     log.info(f"Found matching {diff} in container repository!")
     with open(runtime_record_path(), 'a') as f:
         f.write(f"{format_runtime_task(filepath, match)},\n")
+
 
 def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
     """
@@ -93,10 +95,10 @@ def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None])
     Log an error or critical event both to the error record and log.
     :param log_msg: What message to print to console and log.
     :param filepath: Which file did the error occur in.
-    :param logfunction: PRE: must be error or critical.
+    :param logfunction: PRE: must be warn, error or critical.
     :return:
     """
-    assert logfunction == log.error or logfunction == log.critical, "Precondition violated! logfunction must be error or critical."
+    assert logfunction == log.error or logfunction == log.critical or logfunction == log.warn, "Precondition violated! logfunction must be error or critical."
     logfunction(log_msg)
     with open(error_record_path(), 'a') as f:
         f.write(f"{format_runtime_task(filepath)},\n")
@@ -186,16 +188,18 @@ def diff_lines(text1: str, text2: str):
 
 
 def run():
+    # create runtime record
     # iterate through runtime log
     # for each entry that has not yet run, generate patched file
     # replace 'match'
     # (any error handling that will become apparent)
     # update runtime log
-
+    initiate_runtime_log()
     # assume the entire record can be kept in memory for now
     with open(runtime_record_path(), "r") as f:
-        records = json.loads(f.read())
+        records = json.load(f)
     current_record = 0
+    exit(0)
     while records[current_record]["diffed"]:
         current_record += 1
     while current_record < len(records):
