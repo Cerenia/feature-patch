@@ -7,6 +7,7 @@
 # in the repo are provided when reading the source proved necessary.
 # subrepo expects a bash shell. We make sure to map all paths to POSIX paths in this file to avoid confusions.
 import os, inspect
+import re
 from plumbum import local
 from .util import configuration, constants, path_diff, execute
 from .log import log
@@ -156,38 +157,15 @@ def add_subrepo():
     cwd = os.getcwd()
     navigate_to(CONTAINER_ROOT_PATH)
     output = execute(git["status"])
-    lines = output.split("\n")
-    change_present = False
-    i = 0
-    while i < len(lines) and not change_present:
-        line = lines[i]
-        if "modified:" in line:
-            # used 'all' to avoid issues with varying separators in pathnames
-            if in_subrepo(line):
-                change_present = True
-                log.info("Unstaged changes in subrepo, adding...")
-            else:
-                log.debug(f"all of {subrepo_name().split('/')} not found in:\n {line}")
-        else:
-            log.debug(f"modified not found in:\n {line}")
-        if "Untracked files:" in line:
-            # Check all following lines for subrepo
-            j = i + 1
-            while j < len(lines) and not change_present:
-                following_line = lines[j]
-                if in_subrepo(following_line):
-                    change_present = True
-                    log.info("Unstaged changes in subrepo, adding...")
-                else:
-                    log.debug(f"all of {subrepo_name().split('/')} not found in:\n {line}")
-                j = j + 1
-        i = i + 1
-    if change_present:
-        # Doesn't matter if it was already added, change present will still be true
+    navigate_to(cwd)
+    # Search for subrepo directory in output
+    pattern = fr"{subrepo_name()}"
+    has_match = re.search(pattern, output)
+    if has_match is not None:
         execute(git["add", path_join(subrepo_name(), "*")])
         execute(git["commit", "-m", "changes in subrepository"])
-    navigate_to(cwd)
-    return change_present
+        return True
+    return False
 
 
 def commit_subrepo(message):
