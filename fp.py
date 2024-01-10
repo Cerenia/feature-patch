@@ -6,11 +6,11 @@ from featurePatch.log import *
 
 
 def main():
-    #clean_subrepo()
+    clean_subrepo()
     #create_migration_branch("v1.1.1")
     #upgrade_container_to("v1.1.1")
     # TODO: Doesn't work yet, do I need to remove the subrepository before doing a fresh clone?
-    checkout_subprepo("v1.1.1")
+    checkout_subprepo("migration_v1.1.1")
     #extract_feature(True)
     #push_subrepo("Extracted contact points")
 

@@ -187,6 +187,16 @@ def commit_subrepo(message):
         navigate_to(cwd)
 
 
+def commit_container(message):
+    """
+    Add and commit any changes of the container repository.
+    :return:
+    """
+    navigate_to(CONTAINER_ROOT_PATH)
+    execute(git["add", "."])
+    execute(git["commit", "-m", message])
+
+
 def push_subrepo(message: str):
     """
     push to current subrepository branch. Will add and commit with provided message.
@@ -307,13 +317,18 @@ def upgrade_container_to(tag, main_branch_name="main"):
 
 def checkout_subprepo(subrepo_branch):
     """
-    Checkout different branch of subrepository.
-    PRE: Clean working tree.
+    Clones a different branch of the subrepo.
     :param subrepo_branch: which branch to switch to
     :return:
     """
     navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", "-b", subrepo_branch, authenticated_subrepo_url(), subrepo_name()])
+    # Push first to not destroy anything.
+    #push_subrepo(f"Push before cloning {subrepo_branch}...")
+    #execute(git["rm", "-r", subrepo_name()])
+    #execute(git["mkdir", subrepo_name()])
+    #execute()
+    commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.")
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", authenticated_subrepo_url(), subrepo_name(), "-b", subrepo_branch, "--force"])
 
 
 def initialize_subrepo():
