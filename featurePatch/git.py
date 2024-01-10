@@ -143,6 +143,10 @@ def clean_subrepo():
     execute(cmd)
 
 
+def in_subrepo(line):
+    return all([dirname in line for dirname in subrepo_name().split("/")])
+
+
 def add_subrepo():
     """
     Adds any changes within the subrepository in the container and commits them.
@@ -154,21 +158,34 @@ def add_subrepo():
     output = execute(git["status"])
     lines = output.split("\n")
     change_present = False
-    for line in lines:
+    i = 0
+    while i < len(lines) and not change_present:
+        line = lines[i]
         if "modified:" in line:
             # used 'all' to avoid issues with varying separators in pathnames
-            if all([dirname in line for dirname in subrepo_name().split("/")]):
+            if in_subrepo(line):
                 change_present = True
                 log.info("Unstaged changes in subrepo, adding...")
             else:
                 log.debug(f"all of {subrepo_name().split('/')} not found in:\n {line}")
         else:
             log.debug(f"modified not found in:\n {line}")
+        if "Untracked files:" in line:
+            # Check all following lines for subrepo
+            j = i + 1
+            while j < len(lines) and not change_present:
+                following_line = lines[j]
+                if in_subrepo(following_line):
+                    change_present = True
+                    log.info("Unstaged changes in subrepo, adding...")
+                else:
+                    log.debug(f"all of {subrepo_name().split('/')} not found in:\n {line}")
+                j = j + 1
+        i = i + 1
     if change_present:
         # Doesn't matter if it was already added, change present will still be true
         execute(git["add", path_join(subrepo_name(), "*")])
         execute(git["commit", "-m", "changes in subrepository"])
-        # TODO: Error handling?
     navigate_to(cwd)
     return change_present
 
@@ -176,7 +193,6 @@ def add_subrepo():
 def commit_subrepo(message):
     """
     adds and commits changes to subrepo if there are any
-    preserves cwd.
     """
     changes = add_subrepo()
     if changes:
@@ -192,9 +208,11 @@ def commit_container(message):
     Add and commit any changes of the container repository.
     :return:
     """
+    cwd = os.getcwd()
     navigate_to(CONTAINER_ROOT_PATH)
     execute(git["add", "."])
     execute(git["commit", "-m", message])
+    navigate_to(cwd)
 
 
 def push_subrepo(message: str):
@@ -323,10 +341,9 @@ def checkout_subprepo(subrepo_branch):
     """
     navigate_to(CONTAINER_ROOT_PATH)
     # Push first to not destroy anything.
-    #push_subrepo(f"Push before cloning {subrepo_branch}...")
-    #execute(git["rm", "-r", subrepo_name()])
-    #execute(git["mkdir", subrepo_name()])
-    #execute()
+    push_subrepo(f"Push before cloning {subrepo_branch}...")
+    execute(local["rm"]["-r", subrepo_name()], retcodes=(0, 1))
+    execute(local["mkdir"][subrepo_name()])
     commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.")
     execute(git["subrepo", SUBREPO_VERBOSITY, "clone", authenticated_subrepo_url(), subrepo_name(), "-b", subrepo_branch, "--force"])
 
