@@ -2,6 +2,7 @@ import inspect
 import yaml
 import os
 from .log import log
+from plumbum import local
 
 config: dict = None
 const: dict = None
@@ -116,6 +117,14 @@ def contact_points_path():
     """
     return os.path.join(subrepo_path(), "contactPoints")
 
+
+def clear_contact_points():
+    """
+    removes contact points folder to allow the application to compile and run.
+    :return:
+    """
+    # Don't care if directory doesn't exist
+    execute(local["rm"][contact_points_path(), "-r"], retcodes=(0, 1))
 
 def add_to_config_template():
     """

@@ -1,7 +1,7 @@
 from featurePatch.android.extractFeature import extract_feature
 from featurePatch.android.applyFeature import initiate_runtime_log
 from featurePatch.android.applyFeature import run as applyFeature
-from featurePatch.util import init_cygwin, add_to_config_template
+from featurePatch.util import clear_contact_points
 from featurePatch.git import *
 from featurePatch.log import *
 
@@ -15,6 +15,7 @@ def main():
     #upgrade_container_to("v1.1.1")
     #checkout_subprepo("migration_v1.1.1")
     applyFeature()
+    clear_contact_points()
     # Attempt to apply
     # Clean up by hand
     # Merge subrepo back into master & checkout master

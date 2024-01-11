@@ -85,7 +85,7 @@ def match_files(subrepo_dir: str, container_dir: str):
 
 
 def write_runtime_record(diff, filepath, match):
-    if "." in match:
+    if re.search(".$", match) is not None:
         log.info(f"Found pure copy file {diff}!")
     else:
         log.info(f"Found matching {diff}!")
@@ -144,8 +144,12 @@ def initiate_runtime_log():
 
     # Close Json Array Literal
     for path in [runtime_record_path, error_record_path]:
-        with open(path(), "a") as f:
-            f.write("]")
+        with open(path(), "r+") as f:
+            content = f.read()
+            content.removesuffix(",\n")
+            content = content + "]"
+            f.seek(0)
+            f.write(content)
 
 
 class MissmatchedMarkerError(Exception):
@@ -222,7 +226,7 @@ def run():
         try:
             subrepo_path = records[current_record]["contact_point"]
             container_path = records[current_record]["match"]
-            if "." in container_path:
+            if re.search(".$", container_path) is not None:
                 # Pure copy file, simply copy
                 execute(local["cp"][subrepo_path, container_path])
             else:
