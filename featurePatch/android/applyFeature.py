@@ -146,9 +146,10 @@ def initiate_runtime_log():
     for path in [runtime_record_path, error_record_path]:
         with open(path(), "r+") as f:
             content = f.read()
-            content.removesuffix(",\n")
-            content = content + "]"
+            content = content[:-2]
+            content = content + "\n]"
             f.seek(0)
+            f.truncate()
             f.write(content)
 
 
@@ -244,3 +245,4 @@ def run():
             records[current_record]["diffed"] = True
             with open(runtime_record_path(), "w") as f:
                 f.write(json.dumps(records))
+            current_record = current_record + 1
