@@ -198,10 +198,11 @@ def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
     :param tail: Defines preferred diff location if the split happens to be mid path.
     :return: A path sequence that can directly be used with os.path.join.
     """
-    if len(long_path) < len(short_path):
-        log.critical(f"Precondition violation. Long path: {long_path} was shorter than: {short_path}.")
+    if len(long_path) <= len(short_path):
+        log.critical(f"Precondition violation. Long path: {long_path} was not longer than: {short_path}.")
         exit(1)
 
+    log.info(f"{long_path}\n{short_path}")
     parts = long_path.split(short_path)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
     useful_parts = [element for element in filter(lambda x: x, parts)]

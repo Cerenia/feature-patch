@@ -3,3 +3,5 @@
 migration_branch_base_name: migration
 subrepo_temporary_directoryname: subrepo_tmp
 android_manifest_file: AndroidManifest.xml
+# Approximate deadline for the diffing process of each file [s]
+per_file_diff_deadline: None

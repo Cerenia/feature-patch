@@ -6,7 +6,11 @@ Capabilities:
 - Walk through all the contact point files and attempt to match them in the fresh repo (report anything you could not)
 - Diff the matched files and attempt to merge (report failures)
 """
+import sys
+
+import traceback
 from typing import Callable
+from collections import namedtuple
 
 """
 Merge:
@@ -40,7 +44,7 @@ Assumption: patch files have been written in such a way as to minimize the inter
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
-from ..util import runtime_record_path, error_record_path, path_diff, log, configuration
+from ..util import runtime_record_path, error_record_path, path_diff, log, configuration, constants
 from ..git import execute
 import os
 import json
@@ -62,31 +66,32 @@ def match_files(subrepo_dir: str, container_dir: str):
     for dirpath, _, filenames in os.walk(subrepo_dir):
         for filename in filenames:
             subrepo_filepath = os.path.join(dirpath, filename)
-            filepath_stub = path_diff(subrepo_filepath, subrepo_dir)
-            container_match = os.path.join(container_dir, filepath_stub)
+            container_match = os.path.join(container_dir, filename)
             if os.path.isfile(container_match):
-                write_runtime_record(filepath_stub, subrepo_filepath, container_match)
+                write_runtime_record(filename, subrepo_filepath, container_match)
             else:
                 # Check if the file is a pure-copy file => Markers on two adjacent lines without content
                 with open(os.path.join(dirpath, filename), "r") as f:
                     content = f.read()
                 marker = configuration()["marker"]
                 # '$^' makes sure that there is no content between the markers indicating that the entire file should be copied
-                p = rf"{marker} +start ?$^ +{marker} +end"
+                p = rf"{marker}\s*start\s*$\n^\s*//{marker}\s*end|" \
+                    rf"{marker}\s*start\s*-->\s*$\n^\s*<!--\s*{marker}\s*end" # XML comments
                 found_match = re.search(p, content, re.MULTILINE)
-                if found_match is not None:
-                    filepath_stub = os.path.join(path_diff(filepath_stub, filename), ".")
-                    container_match = os.path.join(container_dir, filepath_stub)
-                    write_runtime_record(filepath_stub, subrepo_filepath, container_match)
+                if found_match:
+                    container_match = os.path.join(container_dir, ".")
+                    write_runtime_record(filename, subrepo_filepath, container_match)
                 else:
                     write_error(
-                        f"ERROR: {filepath_stub} was not found in container repository and {filename} is not a pure-copy file, please check this file manually.",
+                        f"ERROR: {filename} was not found in container repository and {filename} is not a pure-copy file, please check this file manually.",
                         subrepo_filepath, log.error)
 
 
 def write_runtime_record(diff, filepath, match):
-    if re.search(".$", match) is not None:
+    m = re.search(r"\.$", match)
+    if m:
         log.info(f"Found pure copy file {diff}!")
+        log.info(m.group(0))
     else:
         log.info(f"Found matching {diff}!")
     with open(runtime_record_path(), 'a') as f:
@@ -161,52 +166,45 @@ class MissmatchedMarkerError(Exception):
 
 
 def generate_patch_content(match: str, contact_point: str, filepath):
-    # Will have to add corner cases as we see them and add them to the test repository
-    diffs = diff_lines(match, contact_point)
+    # TODO: Will have to add corner cases as we see them and add them to the test repository
+    deadline = constants()["per_file_diff_deadline"]
+    deadline = None if deadline == "None" else float(deadline)
+    print(type(deadline), deadline)
+    diffs = dmp_module.diff_match_patch().diff_lineMode(contact_point, match, deadline)
     # Isolate the diff lines that contain the contact point
     marker = configuration()["marker"]
     # list of tuples, start/end, expects "start" and "end" to be part of the markers
     marker_indices = []
-    marker_idx = (None, None)
+    # Readability, https://docs.python.org/3/library/collections.html#collections.namedtuple
+    MarkerIndex = namedtuple("markerIndex", ["start", "end"])
+    marker_idx = MarkerIndex(None, None)
     for idx, diff in enumerate(diffs):
         if marker in diff[1]:
             if "start" in diff[1]:
-                if marker_idx.first is None:
-                    marker_idx = (idx, None)
+                if marker_idx.start is None:
+                    marker_idx = MarkerIndex(idx, None)
                 else:
                     error_msg = f"Found repeated 'start' marker before matching 'end' marker! Check this file manually."
                     write_error(error_msg + f"\n {filepath}", filepath, log.error)
                     raise MissmatchedMarkerError(error_msg)
             elif "end" in diff[1]:
-                if marker_idx.first is None:
+                if marker_idx.start is None:
                     error_msg = f"'end' marker found before 'start' marker! Check this file manually."
                     write_error(error_msg + f"\n {filepath}", filepath, log.error)
                     raise MissmatchedMarkerError(error_msg)
                 else:
-                    marker_idx = (marker_idx.first, idx)
+                    marker_idx = MarkerIndex(marker_idx.first, idx)
             else:
                 error_msg = f"Invalid marker! Neither 'start' or 'end' specified."
                 write_error(error_msg + f"\n {filepath}", filepath, log.error)
                 raise MissmatchedMarkerError(error_msg)
-            if marker_idx.first is not None and marker_idx.end is not None:
+            if marker_idx.start is not None and marker_idx.end is not None:
                 marker_indices.append(marker_idx)
-                marker_idx = (None, None)
+                marker_idx = MarkerIndex(None, None)
     # Naively try to apply them
     dmp = dmp_module.diff_match_patch()
     patch, _ = dmp.patch_apply([diffs[start:end + 1] for (start, end) in marker_indices], match)
     return patch
-
-
-def diff_lines(text1: str, text2: str):
-    # TODO: May want to allow to tweak the options of the module for certain corner cases
-    # https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-    dmp = dmp_module.diff_match_patch()
-    intermediate = dmp.diff_linesToChars(text1, text2)
-    log.info(f"intermediate: {intermediate}")
-    line_text1 = intermediate.chars1
-    line_text2 = intermediate.chars2
-    line_array = intermediate.lineArray
-    return dmp.diff_charsToLines(dmp.diff_main(line_text1, line_text2, False), line_array)
 
 
 def run():
@@ -227,7 +225,7 @@ def run():
         try:
             subrepo_path = records[current_record]["contact_point"]
             container_path = records[current_record]["match"]
-            if re.search(".$", container_path) is not None:
+            if re.search(r"\.$", container_path) is not None:
                 # Pure copy file, simply copy
                 execute(local["cp"][subrepo_path, container_path])
             else:
@@ -239,7 +237,8 @@ def run():
                     with open(container_path, "w") as f:
                         f.write(new_content)
         except Exception as e:
-            write_error(f"An exception occured:\n {str(e)}", records[current_record]["match"])
+            write_error(f"{sys.last_type, traceback.format_exception(e)}\n", records[current_record]["match"], log.critical)
+            exit(1)
         finally:
             # Write the updated record to file after each iteration
             records[current_record]["diffed"] = True

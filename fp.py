@@ -14,7 +14,6 @@ def main():
     #push_subrepo("Extracted contact points")
     #upgrade_container_to("v1.1.1")
     #checkout_subprepo("migration_v1.1.1")
-    set_debug_logger()
     applyFeature()
     clear_contact_points()
     # Attempt to apply
