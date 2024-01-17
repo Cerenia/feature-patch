@@ -169,41 +169,19 @@ def generate_patch_content(match: str, contact_point: str, filepath):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
     deadline = constants()["per_file_diff_deadline"]
     deadline = None if deadline == "None" else float(deadline)
-    print(type(deadline), deadline)
-    diffs = dmp_module.diff_match_patch().diff_lineMode(contact_point, match, deadline)
+    dmp = dmp_module.diff_match_patch()
+    diffs = dmp.diff_lineMode(contact_point, match, deadline)
+    patches = dmp.patch_make(match, diffs)
     # Isolate the diff lines that contain the contact point
     marker = configuration()["marker"]
     # list of tuples, start/end, expects "start" and "end" to be part of the markers
     marker_indices = []
-    # Readability, https://docs.python.org/3/library/collections.html#collections.namedtuple
-    MarkerIndex = namedtuple("markerIndex", ["start", "end"])
-    marker_idx = MarkerIndex(None, None)
-    for idx, diff in enumerate(diffs):
-        if marker in diff[1]:
-            if "start" in diff[1]:
-                if marker_idx.start is None:
-                    marker_idx = MarkerIndex(idx, None)
-                else:
-                    error_msg = f"Found repeated 'start' marker before matching 'end' marker! Check this file manually."
-                    write_error(error_msg + f"\n {filepath}", filepath, log.error)
-                    raise MissmatchedMarkerError(error_msg)
-            elif "end" in diff[1]:
-                if marker_idx.start is None:
-                    error_msg = f"'end' marker found before 'start' marker! Check this file manually."
-                    write_error(error_msg + f"\n {filepath}", filepath, log.error)
-                    raise MissmatchedMarkerError(error_msg)
-                else:
-                    marker_idx = MarkerIndex(marker_idx.first, idx)
-            else:
-                error_msg = f"Invalid marker! Neither 'start' or 'end' specified."
-                write_error(error_msg + f"\n {filepath}", filepath, log.error)
-                raise MissmatchedMarkerError(error_msg)
-            if marker_idx.start is not None and marker_idx.end is not None:
-                marker_indices.append(marker_idx)
-                marker_idx = MarkerIndex(None, None)
+    for idx, p in enumerate(patches):
+        if marker in str(p) and "start" in str(p) and "end" in str(p):
+            marker_indices.append(idx)
     # Naively try to apply them
     dmp = dmp_module.diff_match_patch()
-    patch, _ = dmp.patch_apply([diffs[start:end + 1] for (start, end) in marker_indices], match)
+    patch, _ = dmp.patch_apply([patches[m] for m in marker_indices], match)
     return patch
 
 
@@ -229,12 +207,12 @@ def run():
                 # Pure copy file, simply copy
                 execute(local["cp"][subrepo_path, container_path])
             else:
-                with open(container_path, "r") as f:
+                with open(container_path, "r", encoding="utf-8") as f:
                     match = f.read()
-                with open(records[current_record]["contact_point"], "r") as f:
+                with open(records[current_record]["contact_point"], "r", encoding="utf-8") as f:
                     contact_point = f.read()
                     new_content = generate_patch_content(match, contact_point, records[current_record]["contact_point"])
-                    with open(container_path, "w") as f:
+                    with open(container_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
         except Exception as e:
             write_error(f"{sys.last_type, traceback.format_exception(e)}\n", records[current_record]["match"], log.critical)
