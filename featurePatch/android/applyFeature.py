@@ -151,6 +151,9 @@ def initiate_runtime_log():
     for path in [runtime_record_path, error_record_path]:
         with open(path(), "r+") as f:
             content = f.read()
+            if content == "[\n":
+                log.critical("No matches found, cannot proceed. Is the correct branch checked out?")
+                exit(1)
             content = content[:-2]
             content = content + "\n]"
             f.seek(0)
