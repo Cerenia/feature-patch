@@ -45,7 +45,7 @@ import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
 from ..util import runtime_record_path, error_record_path, path_diff, log, configuration, constants
-from ..git import execute
+from ..git import execute, checkout_unmodified_file, unmodified_file_path
 import os
 import json
 import re
@@ -165,24 +165,49 @@ class MissmatchedMarkerError(Exception):
     pass
 
 
-def generate_patch_content(match: str, contact_point: str, filepath):
-    # TODO: Will have to add corner cases as we see them and add them to the test repository
+def linediffs(text1: str, text2: str):
     deadline = constants()["per_file_diff_deadline"]
     deadline = None if deadline == "None" else float(deadline)
     dmp = dmp_module.diff_match_patch()
-    diffs = dmp.diff_lineMode(contact_point, match, deadline)
-    patches = dmp.patch_make(match, diffs)
-    # Isolate the diff lines that contain the contact point
+    return dmp.diff_lineMode(text1, text2, deadline)
+
+
+def generate_patch_content(match: str, contact_point: str, contact_point_path: str):
+    # TODO: Will have to add corner cases as we see them and add them to the test repository
+    diffs = generate_diffs(match, contact_point, contact_point_path)
     marker = configuration()["marker"]
+    # Isolate the diff lines that contain the contact point
     # list of tuples, start/end, expects "start" and "end" to be part of the markers
     marker_indices = []
-    for idx, p in enumerate(patches):
-        if marker in str(p) and "start" in str(p) and "end" in str(p):
-            marker_indices.append(idx)
+    # TODO: Continue here based on handwritten notes
     # Naively try to apply them
     dmp = dmp_module.diff_match_patch()
-    patch, _ = dmp.patch_apply([patches[m] for m in marker_indices], match)
-    return patch
+    # Don't split strings in diffs => was inserting things in the middle of a line otherwise
+    # https://github.com/google/diff-match-patch/blob/master/python3/diff_match_patch.py#L1687
+    dmp.Match_MaxBits = 0
+    patch, applied = dmp.patch_apply([patches[m] for m in marker_indices], match)
+    return "".join(patch)
+
+
+def generate_diffs(match_text, contact_point_text, contact_point_path):
+    """
+    iterate over all of them and turn any that contain the marker into an insertion.
+    Add context from original file to allow the algorithm to find where to insert it.
+    :return: the transformed diffs
+    """
+    # TODO: Check out the untouched previous version (1.0) and diff against new version (1.1)
+    checkout_unmodified_file(contact_point_path)
+    # TODO: Check if any of the context around the changes has changed from 1.0 to 1.1
+    with open(unmodified_file_path(contact_point_path), "r") as f:
+        unmodified_text = f.read()
+
+    new_diffs = []
+    context = ""
+    for idx, d in enumerate(diffs):
+        # TODO: if yes, add the changed context to the diff around the match lines
+        # TODO: Otherwise just add the untouched context
+        pass
+    return new_diffs
 
 
 def run():

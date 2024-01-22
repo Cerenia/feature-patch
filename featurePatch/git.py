@@ -80,6 +80,7 @@ def map_path(path, to_posix=False):
     """
     if to_posix:
         path = path.replace("\\", "/")
+        # TODO: shouldn't that be frontslashes??
         path = path.replace("C:", "\\c\\")
     elif configuration()["windows"]:
         # remap path
@@ -124,6 +125,25 @@ def migration_branch_name(suffix):
     else:
         suffix = ""
     return constants()["migration_branch_base_name"] + suffix
+
+
+def unmodified_file_path(filepath, windows=False):
+    """
+    Assumes Posix by default.
+    :param filepath: Expects path to current, modified file.
+    :param windows: Set true if the windows compliant file is wanted
+    :return: The path the unmodified file should be written to
+    """
+    separator = "\\" if windows else "/"
+    filename = filepath.split(separator)[-1]
+    return separator.join(filepath.split(separator)[:-1]) + separator + constants()["unmodified_file_base_name"] + "_" + filename
+
+
+def checkout_unmodified_file(filepath):
+    # git show other_branch:path/to/file/xxx > ...
+    navigate_to(CONTAINER_ROOT_PATH)
+    execute(git["show", f"master:{filepath}", ">", unmodified_file_path(filepath)])
+
 
 
 def subrepo_name():
@@ -293,7 +313,8 @@ def pull_container():
 
 def upgrade_container_to(tag, main_branch_name="main"):
     """
-        Fetches all tags and creates a branch for that tag. Merges main up to this tag and checks out the newly created branch.
+        Fetches all tags and creates a branch for that tag. Merges the current main into the 'unmodified_branch'.
+         Merges main up to this tag and finally checks out the newly created branch.
     :param tag: Which tag to upgrade to.
     :param main_branch_name: Name of the main branch.
     :return:
@@ -305,6 +326,9 @@ def upgrade_container_to(tag, main_branch_name="main"):
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version
     execute(git["checkout", f"tags/{tag}", "-b", tag])
+    # Merge current main into 'unmodified_branch'
+    execute(git["checkout", configuration()["unmodified_branch"]])
+    execute(git["merge", main_branch_name])
     # Merge into main branch to note latest sync.
     execute(git["checkout", main_branch_name])
     execute(git["merge", tag])
