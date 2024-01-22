@@ -80,12 +80,11 @@ def map_path(path, to_posix=False):
     """
     if to_posix:
         path = path.replace("\\", "/")
-        # TODO: shouldn't that be frontslashes??
-        path = path.replace("C:", "\\c\\")
+        path = path.replace("C:", "/c")
     elif configuration()["windows"]:
         # remap path
         path = path.replace("/", "\\")
-        path = path.replace("\\c\\", "C:")
+        path = path.replace("/c", "C:")
     return path
 
 
@@ -129,14 +128,19 @@ def migration_branch_name(suffix):
 
 def unmodified_file_path(filepath, windows=False):
     """
-    Assumes Posix by default.
+    Assumes Posix by default and will map filepath accordingly.
     :param filepath: Expects path to current, modified file.
     :param windows: Set true if the windows compliant file is wanted
     :return: The path the unmodified file should be written to
     """
     separator = "\\" if windows else "/"
+    if not windows:
+        filepath = map_path(filepath)
     filename = filepath.split(separator)[-1]
-    return separator.join(filepath.split(separator)[:-1]) + separator + constants()["unmodified_file_base_name"] + "_" + filename
+    relpath = os.path.join(separator.join(filepath.split(separator)[:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
+    #relpath = "." + separator + separator.join(filepath.split(separator)[:-1]) + separator + constants()["unmodified_file_base_name"] + "_" + filename
+    abspath = map_path(os.path.join(configuration()["android_src_root"], relpath), not windows)
+    return abspath
 
 
 def checkout_unmodified_file(filepath):
