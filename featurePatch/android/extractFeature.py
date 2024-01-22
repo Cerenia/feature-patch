@@ -13,7 +13,7 @@ Capabilities:
 """
 
 from plumbum import local
-from ..util import configuration, contact_points_path, subrepo_path, path_diff, log, constants, execute
+from ..util import configuration, contact_points_folder_path, subrepo_path, path_diff, log, constants, execute
 from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
 from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, manifest_path
 
@@ -34,9 +34,9 @@ def prep_folders():
     mkdir = local['mkdir']
     rm = local['rm']
     log.info("Clearing/creating layout, string, drawable, code directories at:")
-    log.info(contact_points_path())
-    rm["-r", "-v", "-f", contact_points_path()]()
-    mkdir[contact_points_path()]()
+    log.info(contact_points_folder_path())
+    rm["-r", "-v", "-f", contact_points_folder_path()]()
+    mkdir[contact_points_folder_path()]()
     mkdir[layout_path]()
     mkdir[string_path]()
     mkdir[drawable_path]()
@@ -109,7 +109,7 @@ def duplicate_manifest():
     cmd = (local['cat'][manifest_path()] | local['grep'][configuration()["marker"]])
     (retcode, _, _) = execute(cmd, retcodes=(0, 1))
     if retcode == 0:
-        log.info(f"Copying manifest into {contact_points_path()}...")
+        log.info(f"Copying manifest into {contact_points_folder_path()}...")
         cmd = local['cp'][manifest_path(), manifest_path(subrepo_path=True)]
         execute(cmd)
 

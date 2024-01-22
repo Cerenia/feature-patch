@@ -44,7 +44,7 @@ Assumption: patch files have been written in such a way as to minimize the inter
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
-from ..util import runtime_record_path, error_record_path, path_diff, log, configuration, constants
+from ..util import runtime_record_path, error_record_path, path_diff, log, configuration, constants, contact_points_folder_path
 from ..git import execute, checkout_unmodified_file, unmodified_file_path
 import os
 import json
@@ -174,6 +174,13 @@ def linediffs(text1: str, text2: str):
 
 def generate_patch_content(match: str, contact_point: str, contact_point_path: str):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
+    match_filepath = path_diff(contact_point_path, contact_points_folder_path())
+    checkout_unmodified_file(match_filepath)
+    with open(unmodified_file_path(match_filepath), "r") as f:
+        unmodified_match_text = f.read()
+    diffs = generate_diffs(unmodified_match_text, match, match_filepath)
+    print(diffs)
+    exit(0)
     diffs = generate_diffs(match, contact_point, contact_point_path)
     marker = configuration()["marker"]
     # Isolate the diff lines that contain the contact point

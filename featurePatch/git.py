@@ -142,7 +142,7 @@ def unmodified_file_path(filepath, windows=False):
 def checkout_unmodified_file(filepath):
     # git show other_branch:path/to/file/xxx > ...
     navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["show", f"master:{filepath}", ">", unmodified_file_path(filepath)])
+    execute(git["show", f"{constants()['unmodified_branch']}:{map_path(filepath)}", ">", unmodified_file_path(filepath)])
 
 
 
@@ -327,13 +327,12 @@ def upgrade_container_to(tag, main_branch_name="main"):
     # Create new branch for this version
     execute(git["checkout", f"tags/{tag}", "-b", tag])
     # Merge current main into 'unmodified_branch'
-    execute(git["checkout", configuration()["unmodified_branch"]])
+    execute(git["checkout", constants()["unmodified_branch"]])
     execute(git["merge", main_branch_name])
     # Merge into main branch to note latest sync.
     execute(git["checkout", main_branch_name])
     execute(git["merge", tag])
     execute(git["checkout", tag])
-
 
 def checkout_subprepo(subrepo_branch):
     """

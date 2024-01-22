@@ -111,7 +111,7 @@ def subrepo_path():
     return conf['feature_git_root']
 
 
-def contact_points_path():
+def contact_points_folder_path():
     """
     :return: absolute directory in which all contact point files should be/ were saved after extracting feature.
     """
@@ -124,7 +124,8 @@ def clear_contact_points():
     :return:
     """
     # Don't care if directory doesn't exist
-    execute(local["rm"][contact_points_path(), "-r"], retcodes=(0, 1))
+    execute(local["rm"][contact_points_folder_path(), "-r"], retcodes=(0, 1))
+
 
 def add_to_config_template():
     """

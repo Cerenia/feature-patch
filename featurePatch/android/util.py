@@ -1,21 +1,21 @@
 import os
-from ..util import contact_points_path, configuration, constants, log
+from ..util import contact_points_folder_path, configuration, constants, log
 
 
 def target_code_folder():
-    return os.path.join(contact_points_path(), "code")
+    return os.path.join(contact_points_folder_path(), "code")
 
 
 def target_drawable_folder():
-    return os.path.join(contact_points_path(), "drawable")
+    return os.path.join(contact_points_folder_path(), "drawable")
 
 
 def target_string_folder():
-    return os.path.join(contact_points_path(), "strings")
+    return os.path.join(contact_points_folder_path(), "strings")
 
 
 def target_layout_folder():
-    return os.path.join(contact_points_path(), "layout")
+    return os.path.join(contact_points_folder_path(), "layout")
 
 
 def src_code_folder():
@@ -41,7 +41,7 @@ def manifest_path(subrepo_path=False):
     :return: 
     """
     if subrepo_path:
-        return os.path.join(contact_points_path(), constants()['android_manifest_file'])
+        return os.path.join(contact_points_folder_path(), constants()['android_manifest_file'])
     src_path = configuration()["android_src_root"]
     if "main" not in src_path:
         log.critical(f"'main' not found in {src_path}. Invalid 'android_src_root' value in configuration!")
