@@ -213,9 +213,8 @@ def generate_diffs(match_text, contact_point_text, contact_point_path):
     # TODO: Check out the untouched previous version (1.0) and diff against new version (1.1)
     checkout_unmodified_file(contact_point_path)
     # TODO: Check if any of the context around the changes has changed from 1.0 to 1.1
-    with open(unmodified_file_path(contact_point_path), "r") as f:
+    with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
         unmodified_text = f.read()
-
     new_diffs = []
     context = ""
     for idx, d in enumerate(diffs):

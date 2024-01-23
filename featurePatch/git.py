@@ -10,6 +10,7 @@ import os, inspect
 import re
 from plumbum import local
 from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS
+from .android.util import map_contact_points_path_to_container
 from .log import log
 
 git = local['git']
@@ -144,7 +145,7 @@ def unmodified_file_path(filepath, windows=False):
         # path was already relative
         relpath = os.path.join(separator.join(filepath.split(separator)[:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
     else:
-        relpath = os.path.join(separator.join(filepath.split(separator)[i:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
+        relpath = os.path.join(separator.join(filepath.split(separator)[i+1:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
     abspath = map_path(os.path.join(contact_points_folder_path(), relpath), not windows)
     return abspath
 
@@ -152,10 +153,11 @@ def unmodified_file_path(filepath, windows=False):
 def checkout_unmodified_file(filepath):
     # git show other_branch:path/to/file/xxx > ...
     navigate_to(CONTAINER_ROOT_PATH)
-    print(filepath)
-    print(map_path(filepath, True))
-    print(unmodified_file_path(map_path(filepath, True)))
-    execute(git["show", f"{constants()['unmodified_branch']}:{map_path(filepath, True)}"] > f"{unmodified_file_path(map_path(filepath, True))}")
+    relative_unmodified_path = path_diff(map_contact_points_path_to_container(filepath),
+                                         configuration()["container_git_root"])
+    unmodified_file_content = git["show", f"{constants()['unmodified_branch']}:{map_path(relative_unmodified_path, True)}"]()
+    with open(unmodified_file_path(filepath, configuration()["windows"]), "w") as f:
+        f.write(unmodified_file_content)
 
 
 def subrepo_name():
