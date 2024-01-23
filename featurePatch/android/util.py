@@ -34,6 +34,29 @@ def src_string_folder():
     return configuration()['android_string_root']
 
 
+def map_contact_points_path_to_container(filepath):
+    if "\\" in filepath:
+        sep = "\\"
+    elif "/" in filepath:
+        sep = "/"
+    else:
+        log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
+    path_parts = filepath.split(sep)
+    filename = path_parts[-1]
+    if len(path_parts) > 1:
+        parent_dir = path_parts[-2]
+        if parent_dir == "code":
+            return os.path.join(src_code_folder(), filename)
+        if parent_dir == "layout":
+            return os.path.join(src_layout_folder(), filename)
+        if parent_dir == "strings":
+            return os.path.join(src_string_folder(), filename)
+        if parent_dir == "drawable":
+            return os.path.join(src_drawable_folder(), filename)
+    # Manifest file
+    return manifest_path()
+
+
 def manifest_path(subrepo_path=False):
     """
         Returns the expected path for the manifest file.

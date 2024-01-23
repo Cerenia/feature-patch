@@ -9,7 +9,7 @@
 import os, inspect
 import re
 from plumbum import local
-from .util import configuration, constants, path_diff, execute
+from .util import configuration, constants, path_diff, execute, contact_points_folder_path
 from .log import log
 
 git = local['git']
@@ -134,20 +134,17 @@ def unmodified_file_path(filepath, windows=False):
     :return: The path the unmodified file should be written to
     """
     separator = "\\" if windows else "/"
-    if not windows:
-        filepath = map_path(filepath)
     filename = filepath.split(separator)[-1]
     relpath = os.path.join(separator.join(filepath.split(separator)[:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
     #relpath = "." + separator + separator.join(filepath.split(separator)[:-1]) + separator + constants()["unmodified_file_base_name"] + "_" + filename
-    abspath = map_path(os.path.join(configuration()["android_src_root"], relpath), not windows)
+    abspath = map_path(os.path.join(contact_points_folder_path(), relpath), not windows)
     return abspath
 
 
 def checkout_unmodified_file(filepath):
     # git show other_branch:path/to/file/xxx > ...
     navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["show", f"{constants()['unmodified_branch']}:{map_path(filepath)}", ">", unmodified_file_path(filepath)])
-
+    execute(git["show", f"{constants()['unmodified_branch']}:{map_path(filepath, True)}"] > f"{unmodified_file_path(map_path(filepath, True))}")
 
 
 def subrepo_name():
