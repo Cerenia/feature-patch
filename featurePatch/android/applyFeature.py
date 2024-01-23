@@ -183,8 +183,8 @@ def generate_patch_content(match: str, contact_point: str, contact_point_path: s
     # TODO: Will have to add corner cases as we see them and add them to the test repository
     match_filepath = path_diff(contact_point_path, contact_points_folder_path())
     match_filepath = map_contact_points_path_to_container(match_filepath)
-    checkout_unmodified_file(match_filepath)
-    with open(unmodified_file_path(match_filepath, configuration()["windows"]), "r") as f:
+    checkout_unmodified_file(contact_point_path)
+    with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
         unmodified_match_text = f.read()
     diffs = generate_diffs(unmodified_match_text, match, match_filepath)
     print(diffs)

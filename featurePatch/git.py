@@ -9,7 +9,7 @@
 import os, inspect
 import re
 from plumbum import local
-from .util import configuration, constants, path_diff, execute, contact_points_folder_path
+from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS
 from .log import log
 
 git = local['git']
@@ -129,14 +129,22 @@ def migration_branch_name(suffix):
 def unmodified_file_path(filepath, windows=False):
     """
     Assumes Posix by default and will map filepath accordingly.
-    :param filepath: Expects path to current, modified file.
+    :param filepath: Expects path to current, modified file in the 'contact_points' folder.
     :param windows: Set true if the windows compliant file is wanted
     :return: The path the unmodified file should be written to
     """
     separator = "\\" if windows else "/"
-    filename = filepath.split(separator)[-1]
-    relpath = os.path.join(separator.join(filepath.split(separator)[:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
-    #relpath = "." + separator + separator.join(filepath.split(separator)[:-1]) + separator + constants()["unmodified_file_base_name"] + "_" + filename
+    parts = filepath.split(separator)
+    filename = parts[-1]
+    # only include any path parts till 'contact_points'
+    i = 0
+    while i < len(parts) and parts[i] != CONTACT_POINTS:
+        i = i + 1
+    if i == len(parts):
+        # path was already relative
+        relpath = os.path.join(separator.join(filepath.split(separator)[:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
+    else:
+        relpath = os.path.join(separator.join(filepath.split(separator)[i:-1]), constants()["unmodified_file_base_name"] + "_" + filename)
     abspath = map_path(os.path.join(contact_points_folder_path(), relpath), not windows)
     return abspath
 
@@ -144,6 +152,9 @@ def unmodified_file_path(filepath, windows=False):
 def checkout_unmodified_file(filepath):
     # git show other_branch:path/to/file/xxx > ...
     navigate_to(CONTAINER_ROOT_PATH)
+    print(filepath)
+    print(map_path(filepath, True))
+    print(unmodified_file_path(map_path(filepath, True)))
     execute(git["show", f"{constants()['unmodified_branch']}:{map_path(filepath, True)}"] > f"{unmodified_file_path(map_path(filepath, True))}")
 
 

@@ -111,11 +111,14 @@ def subrepo_path():
     return conf['feature_git_root']
 
 
+CONTACT_POINTS = "contactPoints"
+
+
 def contact_points_folder_path():
     """
     :return: absolute directory in which all contact point files should be/ were saved after extracting feature.
     """
-    return os.path.join(subrepo_path(), "contactPoints")
+    return os.path.join(subrepo_path(), CONTACT_POINTS)
 
 
 def clear_contact_points():
@@ -203,7 +206,6 @@ def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
         log.critical(f"Precondition violation. Long path: {long_path} was not longer than: {short_path}.")
         exit(1)
 
-    log.info(f"{long_path}\n{short_path}")
     parts = long_path.split(short_path)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
     useful_parts = [element for element in filter(lambda x: x, parts)]
