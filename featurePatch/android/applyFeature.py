@@ -179,18 +179,95 @@ def linediffs(text1: str, text2: str):
     return dmp.diff_lineMode(text1, text2, deadline)
 
 
+def print_some_diffs(title, d, equality=True, deletion=True, markerContains=True, marker=configuration()["marker"]):
+    print(title)
+    print("_____________________")
+    print(len(d))
+    if equality:
+        print("Equality:")
+        if any(x[0] == 0 for x in d):
+            print(next(x[1] for x in d if x[0] == 0))
+        else:
+            print("No Equalities...")
+    if deletion:
+        print("Deletion:")
+        if any(x[0] == -1 for x in d):
+            print(next(x[1] for x in d if x[0] == -1))
+        else:
+            print("No Deletions...")
+    if markerContains:
+        print("Contains Marker:")
+        if any(marker in x[1] for x in d):
+            print(next(str(x[0]) for x in d if marker in x[1]) + "\n", next(x[1] for x in d if marker in x[1]))
+        else:
+            print("No Markers in any diffs...")
+
+
 def generate_patch_content(match: str, contact_point: str, contact_point_path: str):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
+    marker = configuration()["marker"]
     match_filepath = path_diff(contact_point_path, contact_points_folder_path())
     match_filepath = map_contact_points_path_to_container(match_filepath)
     checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
         unmodified_match_text = f.read()
-    diffs = generate_diffs(unmodified_match_text, match, match_filepath)
-    print(diffs)
+    # Anything added inbetween the markers will be positive here
+    diffs = generate_diffs(match, contact_point)
+    # Match up any changed lines between unmodified and match and change these in diffs
+    updated_code = generate_diffs(unmodified_match_text, match)
+    reverse_code = generate_diffs(match, unmodified_match_text)
+    # Line by line exchanges to be done in diffs
+    changes = []
+    for update in reverse_code:
+        if update[0] == -1 or update[0] == 1:
+            # Equalities can stay the same
+            start_idx = -1
+            for line_idx, line in enumerate(update[1].split("\n")):
+                if marker in line:
+                    if "start" in line:
+                        if start_idx != -1:
+                            log.critical("Too many starts!")
+                            exit(1)
+                        else:
+                            start_idx = line_idx
+                    if "end" in line:
+                        if start_idx == -1:
+                            log.critical("Start before end!")
+                            exit(1)
+                        else:
+                            # End untouched block
+                            start_idx = -1
+                else:
+                    if start_idx != -1:
+                        # ignore this line
+                        pass
+                    else:
+                        # This line is relevant
+                        changes.append((update[0], line))
+    changes_idx = 0
+    new_diff_inserts = []
+    for d_idx, d in enumerate(diffs):
+        if d[0] == -1 or d[0] == 1:
+            # Equalities can stay the same
+            for line_idx, line in enumerate(d[1].split("\n")):
+                if changes[changes_idx][1] == line:
+                    if changes[changes_idx][0] != d[0]:
+                        new_diff_inserts = [(d_idx, line_idx, (changes[changes_idx][0], changes[changes_idx][1]))] + new_diff_inserts
+
+
+
+
+    #opposite_diffs = generate_diffs(contact_point, match)
+
+
+    #print_some_diffs("Match - Contact Point", diffs)
+    #print_some_diffs("Contact Point - Match", opposite_diffs)
+    #print_some_diffs("Contact Point - Match", opposite_diffs, equality=False, deletion=False)
+    #second_diffs = generate_diffs(unmodified_match_text, match)
+    #print_some_diffs("Unmodified - Match", second_diffs)
     exit(0)
     diffs = generate_diffs(match, contact_point, contact_point_path)
-    marker = configuration()["marker"]
+
     # Isolate the diff lines that contain the contact point
     # list of tuples, start/end, expects "start" and "end" to be part of the markers
     marker_indices = []
@@ -204,25 +281,30 @@ def generate_patch_content(match: str, contact_point: str, contact_point_path: s
     return "".join(patch)
 
 
-def generate_diffs(match_text, contact_point_text, contact_point_path):
+def generate_diffs(text1, text2):
     """
     iterate over all of them and turn any that contain the marker into an insertion.
     Add context from original file to allow the algorithm to find where to insert it.
     :return: the transformed diffs
     """
-    # TODO: Check out the untouched previous version (1.0) and diff against new version (1.1)
-    checkout_unmodified_file(contact_point_path)
-    # TODO: Check if any of the context around the changes has changed from 1.0 to 1.1
-    with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
-        unmodified_text = f.read()
-    new_diffs = []
-    context = ""
-    for idx, d in enumerate(diffs):
-        # TODO: if yes, add the changed context to the diff around the match lines
-        # TODO: Otherwise just add the untouched context
-        pass
-    return new_diffs
+    # TODO: do I need the path?
+    deadline = constants()["per_file_diff_deadline"]
+    deadline = None if deadline == "None" else float(deadline)
+    return line_diff(text1, text2, deadline)
 
+
+def line_diff(text1, text2, deadline):
+    dmp = dmp_module.diff_match_patch()
+    # Scan the text on a line-by-line basis
+    (text1, text2, linearray) = dmp.diff_linesToChars(text1, text2)
+
+    diffs = dmp.diff_main(text1, text2, False, deadline)
+
+    # Convert the diff back to original text.
+    dmp.diff_charsToLines(diffs, linearray)
+    # Eliminate freak matches (e.g. blank lines)
+    dmp.diff_cleanupSemantic(diffs)
+    return diffs
 
 def run():
     # create runtime record
