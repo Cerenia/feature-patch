@@ -59,6 +59,7 @@ def print_all_diffs(diffs):
         print(f"{title_map[d[0]]}:")
         print(d[1])
 
+
 def match_files(subrepo_dir: str, container_dir: str):
     """
     walks through the directory and attempts to match all the files it contains. For each success, appends the runtime log.
@@ -78,7 +79,7 @@ def match_files(subrepo_dir: str, container_dir: str):
                 write_runtime_record(filename, subrepo_filepath, container_match)
             else:
                 # Check if the file is a pure-copy file => Markers on two adjacent lines without content
-                with open(os.path.join(dirpath, filename), "r") as f:
+                with open(os.path.join(dirpath, filename), "r", encoding="utf-8") as f:
                     content = f.read()
                 marker = configuration()["marker"]
                 # '$^' makes sure that there is no content between the markers indicating that the entire file should be copied
@@ -102,7 +103,7 @@ def write_runtime_record(diff, filepath, match):
     else:
         log.info(f"Found matching {diff}!")
     with open(runtime_record_path(), 'a') as f:
-        f.write(f"{format_runtime_task(filepath, match)},\n")
+        f.write(f"\n{format_runtime_task(filepath, match)},")
 
 
 def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
@@ -143,7 +144,7 @@ def initiate_runtime_log():
         # truncate or create file
         with open(path(), "w") as f:
             # Initiate Json Array Literal
-            f.write("[\n")
+            f.write("[")
 
     # go through all folders and create matchings
     match_files(target_code_folder(), src_code_folder())
@@ -156,7 +157,7 @@ def initiate_runtime_log():
 
     # Close Json Array Literal
     for path in [runtime_record_path, error_record_path]:
-        with open(path(), "r+") as f:
+        with open(path(), "r+", encoding="utf-8") as f:
             content = f.read()
             if content == "[\n":
                 if path == runtime_record_path:
@@ -165,7 +166,7 @@ def initiate_runtime_log():
                 else:
                     content = content + "]"
             else:
-                content = content[:-2]
+                content = content[:-1]
                 content = content + "\n]"
             f.seek(0)
             f.truncate()
@@ -212,10 +213,8 @@ def print_some_diffs(title, d, equality=True, deletion=True, markerContains=True
 
 def generate_merged_content(match: str, contact_point: str, contact_point_path: str):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
-    match_filepath = path_diff(contact_point_path, contact_points_folder_path())
-    match_filepath = map_contact_points_path_to_container(match_filepath)
     checkout_unmodified_file(contact_point_path)
-    with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
+    with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
     # Anything added in between the markers will be positive here
     diffs = compute_line_diff(match, contact_point)
@@ -232,7 +231,6 @@ if not reduce(lambda value, el: value and el, results):
     print([str(p) for p in patches])
     print(results)
 """
-
 
 
 def compute_line_diff(text1, text2, deadline=None):
@@ -288,6 +286,7 @@ def line_diff(text1, text2, deadline):
     dmp.diff_cleanupSemantic(diffs)
     return diffs
 
+
 def run():
     # create runtime record
     # iterate through runtime log
@@ -306,10 +305,12 @@ def run():
         try:
             subrepo_path = records[current_record]["contact_point"]
             container_path = records[current_record]["match"]
-            if re.search(r"\.$", container_path) is not None:
+            if re.search(r"\.$", container_path) is not None or re.search(r"/.$", container_path) is not None:
                 # Pure copy file, simply copy
                 execute(local["cp"][subrepo_path, container_path])
+                log.info(f"Copied {os.path.basename(subrepo_path)}...")
             else:
+                log.info(f"Working on creating a merged version of {os.path.basename(subrepo_path)}...")
                 with open(container_path, "r", encoding="utf-8") as f:
                     match = f.read()
                 with open(records[current_record]["contact_point"], "r", encoding="utf-8") as f:
@@ -324,5 +325,5 @@ def run():
             # Write the updated record to file after each iteration
             records[current_record]["diffed"] = True
             with open(runtime_record_path(), "w") as f:
-                f.write(json.dumps(records))
+                f.write(json.dumps(records, indent=1))
             current_record = current_record + 1

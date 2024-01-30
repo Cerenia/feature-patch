@@ -23,7 +23,7 @@ def main():
     #push_subrepo("Extracted contact points")
     #upgrade_container_to("v1.1.1")
     #checkout_subprepo("migration_v1.1.1")
-
+    #initiate_runtime_log()
     applyFeature()
     clear_contact_points()
 

@@ -156,7 +156,7 @@ def checkout_unmodified_file(filepath):
     relative_unmodified_path = path_diff(map_contact_points_path_to_container(filepath),
                                          configuration()["container_git_root"])
     unmodified_file_content = git["show", f"{constants()['unmodified_branch']}:{map_path(relative_unmodified_path, True)}"]()
-    with open(unmodified_file_path(filepath, configuration()["windows"]), "w") as f:
+    with open(unmodified_file_path(filepath, configuration()["windows"]), "w", encoding="utf-8") as f:
         f.write(unmodified_file_content)
 
 
