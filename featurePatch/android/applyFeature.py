@@ -9,6 +9,7 @@ Capabilities:
 import sys
 
 import traceback
+from functools import reduce
 from typing import Callable
 from collections import namedtuple
 
@@ -51,6 +52,12 @@ import json
 import re
 from plumbum import local
 
+
+def print_all_diffs(diffs):
+    title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
+    for d in diffs:
+        print(f"{title_map[d[0]]}:")
+        print(d[1])
 
 def match_files(subrepo_dir: str, container_dir: str):
     """
@@ -120,7 +127,7 @@ def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None])
     :param logfunction: PRE: must be warn, error or critical.
     :return:
     """
-    assert logfunction == log.error or logfunction == log.critical or logfunction == log.warning, "Precondition violated! logfunction must be error or critical."
+    assert logfunction == log.error or logfunction == log.critical or logfunction == log.warning, "Precondition violated! logfunction must be error, critical or warning."
     logfunction(log_msg)
     with open(error_record_path(), 'a') as f:
         f.write(f"{format_runtime_task(filepath)},\n")
@@ -203,94 +210,69 @@ def print_some_diffs(title, d, equality=True, deletion=True, markerContains=True
             print("No Markers in any diffs...")
 
 
-def generate_patch_content(match: str, contact_point: str, contact_point_path: str):
+def generate_merged_content(match: str, contact_point: str, contact_point_path: str):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
-    marker = configuration()["marker"]
     match_filepath = path_diff(contact_point_path, contact_points_folder_path())
     match_filepath = map_contact_points_path_to_container(match_filepath)
     checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r") as f:
         unmodified_match_text = f.read()
-    # Anything added inbetween the markers will be positive here
-    diffs = generate_diffs(match, contact_point)
+    # Anything added in between the markers will be positive here
+    diffs = compute_line_diff(match, contact_point)
     # Match up any changed lines between unmodified and match and change these in diffs
-    updated_code = generate_diffs(unmodified_match_text, match)
-    reverse_code = generate_diffs(match, unmodified_match_text)
-    # Line by line exchanges to be done in diffs
-    changes = []
-    for update in reverse_code:
-        if update[0] == -1 or update[0] == 1:
-            # Equalities can stay the same
-            start_idx = -1
-            for line_idx, line in enumerate(update[1].split("\n")):
-                if marker in line:
-                    if "start" in line:
-                        if start_idx != -1:
-                            log.critical("Too many starts!")
-                            exit(1)
-                        else:
-                            start_idx = line_idx
-                    if "end" in line:
-                        if start_idx == -1:
-                            log.critical("Start before end!")
-                            exit(1)
-                        else:
-                            # End untouched block
-                            start_idx = -1
-                else:
-                    if start_idx != -1:
-                        # ignore this line
-                        pass
-                    else:
-                        # This line is relevant
-                        changes.append((update[0], line))
-    changes_idx = 0
-    new_diff_inserts = []
-    for d_idx, d in enumerate(diffs):
-        if d[0] == -1 or d[0] == 1:
-            # Equalities can stay the same
-            for line_idx, line in enumerate(d[1].split("\n")):
-                if changes[changes_idx][1] == line:
-                    if changes[changes_idx][0] != d[0]:
-                        new_diff_inserts = [(d_idx, line_idx, (changes[changes_idx][0], changes[changes_idx][1]))] + new_diff_inserts
+    updated_code = compute_line_diff(unmodified_match_text, match)
+    # Take changes to upgrade into account and turn them into equalities
+    diffs = transform_diffs(updated_code, diffs)
+    return dmp_module.diff_match_patch().diff_text2(diffs)
+
+"""
+if not reduce(lambda value, el: value and el, results):
+    last_idx = match_filepath.rfind(os.sep)
+    write_error(f"Not all patches were applied for:{match_filepath[last_idx + 1:]}", match_filepath, log.warning)
+    print([str(p) for p in patches])
+    print(results)
+"""
 
 
 
-
-    #opposite_diffs = generate_diffs(contact_point, match)
-
-
-    #print_some_diffs("Match - Contact Point", diffs)
-    #print_some_diffs("Contact Point - Match", opposite_diffs)
-    #print_some_diffs("Contact Point - Match", opposite_diffs, equality=False, deletion=False)
-    #second_diffs = generate_diffs(unmodified_match_text, match)
-    #print_some_diffs("Unmodified - Match", second_diffs)
-    exit(0)
-    diffs = generate_diffs(match, contact_point, contact_point_path)
-
-    # Isolate the diff lines that contain the contact point
-    # list of tuples, start/end, expects "start" and "end" to be part of the markers
-    marker_indices = []
-    # TODO: Continue here based on handwritten notes
-    # Naively try to apply them
-    dmp = dmp_module.diff_match_patch()
-    # Don't split strings in diffs => was inserting things in the middle of a line otherwise
-    # https://github.com/google/diff-match-patch/blob/master/python3/diff_match_patch.py#L1687
-    dmp.Match_MaxBits = 0
-    patch, applied = dmp.patch_apply([patches[m] for m in marker_indices], match)
-    return "".join(patch)
-
-
-def generate_diffs(text1, text2):
+def compute_line_diff(text1, text2, deadline=None):
     """
-    iterate over all of them and turn any that contain the marker into an insertion.
-    Add context from original file to allow the algorithm to find where to insert it.
-    :return: the transformed diffs
+    pull the deadline out of the configs (if not provided) and pass onto line_diff
+    :return: line-level diff turning text1 into text2
     """
-    # TODO: do I need the path?
-    deadline = constants()["per_file_diff_deadline"]
-    deadline = None if deadline == "None" else float(deadline)
+    if deadline is None:
+        deadline = constants()["per_file_diff_deadline"]
+        deadline = None if deadline == "None" else float(deadline)
     return line_diff(text1, text2, deadline)
+
+
+def transform_diffs(diff_update, diff_patched):
+    """
+    Turns any deletion in diff_update that can be matched by an insertion in diff_changes into an equality.
+    # TODO: Very naive approach, may want to refine as we go
+    :param diff_update: Diff between unmodified and updated files
+    :param diff_patched: Diff between updated and patched files
+    :return: 
+    """
+    for update in diff_update:
+        if update[0] == 1:
+            # Search for equivalent deletion in diffs and turn into equality
+            new_element = ()
+            for idx, d in enumerate(diff_patched):
+                if d[0] == -1:
+                    if d[1].strip() == update[1].strip():
+                        new_element = (0, d[1])
+                        break
+                    else:
+                        log.debug("The Insertion did not match the deletion:\n", update[1], "!=\n", d[1])
+            if new_element != ():
+                if idx == 0:
+                    diff_patched = [new_element] + diff_patched[idx + 1:]
+                if idx == len(diff_patched) - 1:
+                    diff_patched = diff_patched[:idx] + [new_element]
+                else:
+                    diff_patched = diff_patched[0:idx] + [new_element] + diff_patched[idx + 1:]
+    return diff_patched
 
 
 def line_diff(text1, text2, deadline):
@@ -332,7 +314,7 @@ def run():
                     match = f.read()
                 with open(records[current_record]["contact_point"], "r", encoding="utf-8") as f:
                     contact_point = f.read()
-                    new_content = generate_patch_content(match, contact_point, records[current_record]["contact_point"])
+                    new_content = generate_merged_content(match, contact_point, records[current_record]["contact_point"])
                     with open(container_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
         except Exception as e:
