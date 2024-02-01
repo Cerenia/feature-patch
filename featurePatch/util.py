@@ -3,6 +3,9 @@ import yaml
 import os
 from .log import log
 from plumbum import local
+from typing import TypeAlias
+
+DiffList: TypeAlias = list[tuple[int, str]]
 
 config: dict = None
 const: dict = None
@@ -10,7 +13,12 @@ conf_path = None
 run_command_counter = 1
 
 
-def print_all_diffs(diffs):
+def print_all_diffs(diffs: DiffList):
+    """
+    Visualize all Diffs in the list by printing them on the console
+    :param diffs:
+    :return: the string that was printed on the console for further processing.
+    """
     title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
     result = ""
     for d in diffs:
@@ -19,15 +27,8 @@ def print_all_diffs(diffs):
         result = result + f"{title_map[d[0]]}:\n" + d[1] + "\n"
     return result
 
-def init_cygwin():
-    # expand path if using cygwin
-    os.environ["PATH"] = (
-        # TODO: (for plumbum) extract to configs once structure is clearer. or just don't use plumbum :(
-            os.path.expanduser("/c/Program Files/Git/usr/bin/") + ";" + os.environ["PATH"]
-    )
 
-
-def execute(cmd, retcodes=None, do_log=True):
+def execute(cmd, retcodes: tuple[int, ...]=None, do_log=True):
     """
     Executes and logs a plumbum command.
     See: https://plumbum.readthedocs.io/en/latest/local_commands.html
@@ -38,7 +39,7 @@ def execute(cmd, retcodes=None, do_log=True):
     :param cmd: the plumbum command to execute
     :param retcodes: None or a tuple of accepted return codes
     :param do_log: Flag to turn logging of the command on or off.
-    :return: retcode, stdout, stderr OR stdout
+    :return: retcode, stdout, stderr (if retcode is not None) OR stdout
     """
     global run_command_counter
     log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
@@ -54,12 +55,18 @@ def execute(cmd, retcodes=None, do_log=True):
         return rc, stdout, stderr
 
 
-def set_conf_path(path):
+def set_conf_path(path: str):
+    """
+    Manually set the path to the configuration file if non-standard.
+    """
     global conf_path
     conf_path = path
 
 
-def find_conf_path(manual_path=None):
+def find_conf_path():
+    """
+    Attempts to find the configuration file starting from the working dir.
+    """
     if conf_path is None:
         if os.path.isdir("./conf"):
             return os.path.abspath(os.path.join(".", "conf"))
@@ -78,8 +85,8 @@ def find_conf_path(manual_path=None):
 
 def configuration():
     """
+    Provides a handle to the configuration dictionary.
     Assumes to find config.yml at <python_root>/conf/config.yml
-    :return:
     """
     global config
     if config is None:
@@ -102,6 +109,9 @@ def configuration():
 
 
 def constants():
+    """
+    Provides handle to the constants dictionary. Infers path through 'configuration'
+    """
     global const
     if const is None:
         log.info("Loading Constants...")
@@ -143,8 +153,10 @@ def clear_contact_points():
 
 def add_to_config_template():
     """
-     Run whenever you add a configuration variable, expects ..\conf\config.yml will modify ..\conf\config_template.yml additively
-     Deleting flags should be done manually (for now)
+     Run whenever you add a new configuration variable,
+     Preserves comments above the variables
+     expects ..\conf\config.yml will modify ..\conf\config_template.yml additively
+     Deleting variables should be done manually (for now)
      PRE: Expects to run from repository root
     :return:
     """
