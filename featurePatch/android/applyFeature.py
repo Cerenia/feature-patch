@@ -12,7 +12,7 @@ import re
 from plumbum import local
 
 
-def match_files(subrepo_dir: str, container_dir: str):
+def _match_files(subrepo_dir: str, container_dir: str):
     """
     walks through the directory and attempts to match all the files it contains. For each success, appends the runtime record.
     for failures, appends 'errors'
@@ -25,7 +25,7 @@ def match_files(subrepo_dir: str, container_dir: str):
             subrepo_filepath = os.path.join(dirpath, filename)
             container_match = os.path.join(container_dir, filename)
             if os.path.isfile(container_match):
-                write_runtime_record(filename, subrepo_filepath, container_match)
+                _write_runtime_record(filename, subrepo_filepath, container_match)
             else:
                 # Check if the file is a pure-copy file => Markers on two adjacent lines without content inbetween
                 with open(os.path.join(dirpath, filename), "r", encoding="utf-8") as f:
@@ -38,14 +38,14 @@ def match_files(subrepo_dir: str, container_dir: str):
                 found_match = re.search(p, content, re.MULTILINE)
                 if found_match:
                     container_match = os.path.join(container_dir, ".")
-                    write_runtime_record(filename, subrepo_filepath, container_match)
+                    _write_runtime_record(filename, subrepo_filepath, container_match)
                 else:
-                    write_error(
+                    _write_error(
                         f"ERROR: {filename} was not found in container repository and {filename} is not a pure-copy file, please check this file manually.",
                         subrepo_filepath, log.error)
 
 
-def write_runtime_record(filename, filepath, match):
+def _write_runtime_record(filename, filepath, match):
     """
     Writes an entry to the runtime record.
     Logs what kind of file was found.
@@ -61,10 +61,10 @@ def write_runtime_record(filename, filepath, match):
     else:
         log.info(f"Found matching {filename}!")
     with open(runtime_record_path(), 'a') as f:
-        f.write(f"\n{format_runtime_task(filepath, match)},")
+        f.write(f"\n{_format_runtime_task(filepath, match)},")
 
 
-def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
+def _format_runtime_task(subrepo_file: str, matching_container_file: str = None):
     """
     defines the format of the runtime or error dictionary as json string.
     runtime if both paths are given or pure-copy, error otherwise.
@@ -78,7 +78,7 @@ def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
     return json.dumps(element)
 
 
-def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None]):
+def _write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None]):
     """
     Log a warning,  error or critical event both to the error record and log.
     :param log_msg: What message to print to console and log.
@@ -89,10 +89,10 @@ def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None])
     assert logfunction == log.error or logfunction == log.critical or logfunction == log.warning, "Precondition violated! logfunction must be error, critical or warning."
     logfunction(log_msg)
     with open(error_record_path(), 'a') as f:
-        f.write(f"{format_runtime_task(filepath)},\n")
+        f.write(f"{_format_runtime_task(filepath)},\n")
 
 
-def initiate_runtime_log():
+def _initiate_runtime_log():
     """
      Walk through all the files in the contact_point folder and attempt to match them.
      Record if you cannot match a file and save the matched pairs + status indicator in the runtime_record.
@@ -105,13 +105,13 @@ def initiate_runtime_log():
             f.write("[")
 
     # go through all folders and create matchings
-    match_files(target_code_folder(), src_code_folder())
-    match_files(target_drawable_folder(), src_drawable_folder())
-    match_files(target_string_folder(), src_string_folder())
-    match_files(target_layout_folder(), src_layout_folder())
+    _match_files(target_code_folder(), src_code_folder())
+    _match_files(target_drawable_folder(), src_drawable_folder())
+    _match_files(target_string_folder(), src_string_folder())
+    _match_files(target_layout_folder(), src_layout_folder())
     # Manifest
     if os.path.isfile(manifest_path(subrepo_path=True)):
-        write_runtime_record("AndroidManifest.xml", manifest_path(subrepo_path=True), manifest_path())
+        _write_runtime_record("AndroidManifest.xml", manifest_path(subrepo_path=True), manifest_path())
 
     # Close Json Array Literal
     for path in [runtime_record_path, error_record_path]:
@@ -138,20 +138,28 @@ class MissmatchedMarkerError(Exception):
     pass
 
 
-def generate_merged_content(match: str, contact_point: str, contact_point_path: str):
+def _generate_merged_content(match: str, contact_point: str, contact_point_path: str):
+    """
+    Best effort merge of the contact point changes with the upgraded container file. Takes the
+    unmodified container file (on which the contact point changes are based) into account.
+    :param match: The text of the matched file in the upgraded container repo.
+    :param contact_point: The text of the contact point file.
+    :param contact_point_path: The path to the contact point file.
+    :return: The merged text ready to be written to file.
+    """
     # TODO: Will have to add corner cases as we see them and add them to the test repository
     checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
-    diffs = compute_line_diff(match, contact_point)
+    diffs = _compute_line_diff(match, contact_point)
     # Match up any changed lines between unmodified and match and change these in diffs
-    updated_code = compute_line_diff(unmodified_match_text, match)
+    updated_code = _compute_line_diff(unmodified_match_text, match)
     # Take changes to upgrade into account and turn them into equalities
-    diffs = transform_diffs(updated_code, diffs)
+    diffs = _transform_diffs(updated_code, diffs)
     return dmp_module.diff_match_patch().diff_text2(diffs)
 
 
-def compute_line_diff(text1: str, text2: str, deadline: float=None):
+def _compute_line_diff(text1: str, text2: str, deadline: float=None):
     """
     pull the deadline out of the configs (if not provided) and pass onto line_diff
     preprocesses text1 and text2 to treat anything between markers as immutable
@@ -160,15 +168,15 @@ def compute_line_diff(text1: str, text2: str, deadline: float=None):
     if deadline is None:
         deadline = constants()["per_file_diff_deadline"]
         deadline = None if deadline == "None" else float(deadline)
-    diff = line_diff(group_marker_content(text1), group_marker_content(text2), deadline)
+    diff = _line_diff(_group_marker_content(text1), _group_marker_content(text2), deadline)
     # undo any groupings
     ungrouped_diff = []
     for d in diff:
-        ungrouped_diff.append((d[0], ungroup_marker_content(d[1])))
+        ungrouped_diff.append((d[0], _ungroup_marker_content(d[1])))
     return ungrouped_diff
 
 
-def transform_diffs(diff_update: DiffList, diff_modified: DiffList):
+def _transform_diffs(diff_update: DiffList, diff_modified: DiffList):
     """
     Turns any deletion in diff_update that can be matched by an insertion in diff_changes into an equality.
     # TODO: Very naive approach, may want to refine as we go
@@ -197,7 +205,7 @@ def transform_diffs(diff_update: DiffList, diff_modified: DiffList):
     return diff_modified
 
 
-def group_marker_content(text: str):
+def _group_marker_content(text: str):
     """
     In order to make sure that the contents between the marker are treated as one immutable block, we concatenate
     the lines with ||<marker>|| that are inbetween the 'start' and 'end' markers. This way, this content is treated
@@ -220,7 +228,7 @@ def group_marker_content(text: str):
     return "\n".join(new_lines)
 
 
-def ungroup_marker_content(text: str):
+def _ungroup_marker_content(text: str):
     """
     Inverse of 'group_marker_content'
     :return:
@@ -228,7 +236,7 @@ def ungroup_marker_content(text: str):
     return text.replace(f"||{configuration()['marker']}||", "\n")
 
 
-def line_diff(text1: str, text2: str, deadline: float):
+def _line_diff(text1: str, text2: str, deadline: float):
     """
     Pre: text1 and/or text2 have been passed through 'group_marker_content' if they contain marked content
     :param deadline: timeconstraint for the diff in [s], may be None
@@ -251,7 +259,7 @@ def line_diff(text1: str, text2: str, deadline: float):
 
 
 def run():
-    initiate_runtime_log()
+    _initiate_runtime_log()
     # assume the entire record can be kept in memory
     with open(runtime_record_path(), "r") as f:
         records = json.load(f)
@@ -273,11 +281,11 @@ def run():
                     match = f.read()
                 with open(records[current_record]["contact_point"], "r", encoding="utf-8") as f:
                     contact_point = f.read()
-                    new_content = generate_merged_content(match, contact_point, records[current_record]["contact_point"])
+                    new_content = _generate_merged_content(match, contact_point, records[current_record]["contact_point"])
                     with open(container_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
         except Exception as e:
-            write_error(f"{sys.last_type, traceback.format_exception(e)}\n", records[current_record]["match"], log.critical)
+            _write_error(f"{sys.last_type, traceback.format_exception(e)}\n", records[current_record]["match"], log.critical)
             exit(1)
         finally:
             # Write the updated record to file after each iteration

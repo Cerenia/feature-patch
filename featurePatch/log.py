@@ -4,12 +4,12 @@ Functions provided to change logging level or create a logfile duplicating the c
 
 Use:
 from <path to log>.log import log
-
 """
 
 import logging
+from typing import Optional
 
-log: logging.Logger = None
+log: Optional[logging.Logger] = None
 
 # Initialize console logger, Info by default
 if log is None:

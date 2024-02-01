@@ -5,7 +5,7 @@
 #
 ###################
 
-from featurePatch.android.applyFeature import compute_line_diff, transform_diffs
+from featurePatch.android.applyFeature import _compute_line_diff, _transform_diffs
 
 
 def print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
@@ -108,18 +108,18 @@ def print_all_diffs(diffs):
 def test_patch():
     print("Up - C")
     print("_____________________")
-    up_c = compute_line_diff(update, contact_point)
+    up_c = _compute_line_diff(update, contact_point)
     print_all_diffs(up_c)
     print("Un - Up")
     print("_____________________")
-    un_up = compute_line_diff(unmodified, update)
+    un_up = _compute_line_diff(unmodified, update)
     print_all_diffs(un_up)
     #print("Up - Un")
-    up_un = compute_line_diff(update, unmodified)
+    up_un = _compute_line_diff(update, unmodified)
     #print_all_diffs(up_un)
 
 
-    diffs = transform_diffs(un_up, up_c)
+    diffs = _transform_diffs(un_up, up_c)
     print("Transformed")
     print("_____________________")
     print_all_diffs(diffs)

@@ -9,7 +9,7 @@ DiffList: TypeAlias = list[tuple[int, str]]
 
 config: dict = None
 const: dict = None
-conf_path = None
+conf_path: str = None
 run_command_counter = 1
 
 
@@ -28,7 +28,7 @@ def print_all_diffs(diffs: DiffList):
     return result
 
 
-def execute(cmd, retcodes: tuple[int, ...]=None, do_log=True):
+def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     """
     Executes and logs a plumbum command.
     See: https://plumbum.readthedocs.io/en/latest/local_commands.html
