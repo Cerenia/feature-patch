@@ -1,5 +1,5 @@
 ### User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are TODO: configurable by the cli or through manual editing
-# The top level directory path containing the Android source code
+# The top level directory path containing the container Android source code
 android_src_root: TODO
 # Directory paths to layouts, drawables, strings
 android_layout_root: TODO
@@ -28,3 +28,7 @@ subrepo_verbosity: TODO
 git_verbosity: TODO
 # indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
 windows: TODO
+# Where to insert matching context. -1 => before the insert, 1 => after the insert
+diff_context: TODO
+# The number of lines to grab for the context. Will grab *at most* this many non-whitespace lines.
+diff_context_lines: TODO

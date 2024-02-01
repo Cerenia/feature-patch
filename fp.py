@@ -1,21 +1,15 @@
-from featurePatch.android.extractFeature import extract_feature
-from featurePatch.android.applyFeature import _initiate_runtime_log
-from featurePatch.android.applyFeature import run as applyFeature
-from featurePatch.android.applyFeature import _generate_merged_content, _compute_line_diff, print_some_diffs, _transform_diffs
-from featurePatch.test import test_patch
-from featurePatch.util import clear_contact_points
-from featurePatch.git import *
-from featurePatch.log import *
-
-
-
-
-
-
-
+#from featurePatch.android.extractFeature import extract_feature
+#from featurePatch.android.applyFeature import _initiate_runtime_log
+#from featurePatch.android.applyFeature import run as applyFeature
+#from featurePatch.android.applyFeature import _generate_merged_content, _compute_line_diff, _transform_diffs
+#from featurePatch.test import test_patch
+from featurePatch.util import clear_contact_points, add_to_config_template
+#from featurePatch.git import *
+#from featurePatch.log import *
 
 
 def main():
+    add_to_config_template()
     #clean_subrepo()
     #create_migration_branch("v1.1.1")
     #checkout_subprepo("migration_v1.1.1")
@@ -24,11 +18,9 @@ def main():
     #upgrade_container_to("v1.1.1")
     #checkout_subprepo("migration_v1.1.1")
     #initiate_runtime_log()
-    applyFeature()
-    clear_contact_points()
+    #applyFeature()
+    #clear_contact_points()
 
-    # Attempt to apply
-    # Clean up by hand
     # Merge subrepo back into master & checkout master
     # Continue development
     pass
