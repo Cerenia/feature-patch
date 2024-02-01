@@ -348,7 +348,15 @@ def upgrade_container_to(tag: str, main_branch_name="main"):
     execute(git["checkout", tag])
 
 
-def checkout_subprepo(subrepo_branch):
+def checkout_subrepo_migration_branch(tag: str):
+    """
+    Checks out the migration branch for the specified tag.
+    :param tag: The tag for which to checkout the migration branch.
+    """
+    _checkout_subprepo(_migration_branch_name(tag))
+
+
+def _checkout_subprepo(subrepo_branch: str):
     """
     Clones a different branch of the subrepo.
     :param subrepo_branch: which branch to switch to
