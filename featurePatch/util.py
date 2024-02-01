@@ -10,6 +10,15 @@ conf_path = None
 run_command_counter = 1
 
 
+def print_all_diffs(diffs):
+    title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
+    result = ""
+    for d in diffs:
+        print(f"{title_map[d[0]]}:")
+        print(d[1])
+        result = result + f"{title_map[d[0]]}:\n" + d[1] + "\n"
+    return result
+
 def init_cygwin():
     # expand path if using cygwin
     os.environ["PATH"] = (

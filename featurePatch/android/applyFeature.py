@@ -1,51 +1,10 @@
-"""
-
-Expects an extracted feature and clean repo onto which to patch changes where possible
-
-Capabilities:
-- Walk through all the contact point files and attempt to match them in the fresh repo (report anything you could not)
-- Diff the matched files and attempt to merge (report failures)
-"""
 import sys
-
 import traceback
-from functools import reduce
-from typing import Callable
-from collections import namedtuple
-
-"""
-Merge:
-Compare new repo State (Files 'N') and old patch State (Files 'P')
-Assumption: patch files have been written in such a way as to minimize the interface
- => We want to apply all changes outside of a marker to get 'P' -> 'N'
- => We want to identify where the marker contents should be placed in 'N' which ideally just means not applying the 
- subtracting steps to get rid of the marker spots (need to check how to achieve this with the diffing libs)
- 
- If anything fails, we want to be able to descriptively explain why and let the user deal with it instead 
- (provide log output) but then continue on (don't crash the whole thing because of a failure)
- 
- Finally we want to output a summary with action point that the user should have a manual look at.
- 
- Obvious cases:
- - file can not be matched (e.g., a class completely dissapeared or was translated to Kotlin)
- 
- 
- Needed Pieces:
- - Log file location
- - Log file prep
- 
- - match files (record matchings in some file that then can be walked. Add a done or not flag to this structure so the 
- program can be started and stopped with some flags to steer what it tries to do again or not)
- - iterate over all matches
-    - compute diff
-    - merge (resulting in files 'M')
-    - replace 'N' with 'M'
-"""
-
+from typing import Callable, TypeAlias
 import diff_match_patch as dmp_module
-from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder, map_contact_points_path_to_container
+from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
-from ..util import runtime_record_path, error_record_path, path_diff, log, configuration, constants, contact_points_folder_path
+from ..util import runtime_record_path, error_record_path, log, configuration, constants, print_all_diffs
 from ..git import execute, checkout_unmodified_file, unmodified_file_path
 import os
 import json
@@ -53,27 +12,17 @@ import re
 from plumbum import local
 
 
-def print_all_diffs(diffs):
-    title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
-    result = ""
-    for d in diffs:
-        print(f"{title_map[d[0]]}:")
-        print(d[1])
-        result = result + f"{title_map[d[0]]}:\n" + d[1] + "\n"
-    return result
+DiffList: TypeAlias = list[tuple[int, str]]
 
 
 def match_files(subrepo_dir: str, container_dir: str):
     """
-    walks through the directory and attempts to match all the files it contains. For each success, appends the runtime log.
-    for failures, appends the match error log
+    walks through the directory and attempts to match all the files it contains. For each success, appends the runtime record.
+    for failures, appends 'errors'
     :param subrepo_dir: root of folder to walk
     :param container_dir: corresponding folder in the container repository
     :param runtime_log: path to runtime log file
     """
-    # walk through folder hierarchy
-    # for each file, check to find the equivalent file in the other folder
-    # if found, update the runtime log, otherwise update the error log
     for dirpath, _, filenames in os.walk(subrepo_dir):
         for filename in filenames:
             subrepo_filepath = os.path.join(dirpath, filename)
@@ -81,12 +30,13 @@ def match_files(subrepo_dir: str, container_dir: str):
             if os.path.isfile(container_match):
                 write_runtime_record(filename, subrepo_filepath, container_match)
             else:
-                # Check if the file is a pure-copy file => Markers on two adjacent lines without content
+                # Check if the file is a pure-copy file => Markers on two adjacent lines without content inbetween
                 with open(os.path.join(dirpath, filename), "r", encoding="utf-8") as f:
                     content = f.read()
                 marker = configuration()["marker"]
                 # '$^' makes sure that there is no content between the markers indicating that the entire file should be copied
-                p = rf"{marker}\s*start\s*$\n^\s*//{marker}\s*end|" \
+                #               Java-style comments
+                p = rf"{marker}\s*start\s*$\n^\s*//{marker}\s*end|" \ 
                     rf"{marker}\s*start\s*-->\s*$\n^\s*<!--\s*{marker}\s*end" # XML comments
                 found_match = re.search(p, content, re.MULTILINE)
                 if found_match:
@@ -98,21 +48,29 @@ def match_files(subrepo_dir: str, container_dir: str):
                         subrepo_filepath, log.error)
 
 
-def write_runtime_record(diff, filepath, match):
+def write_runtime_record(filename, filepath, match):
+    """
+    Writes an entry to the runtime record.
+    Logs what kind of file was found.
+    :param filename: the name of the matched file
+    :param filepath: path to file in contact points folder
+    :param match: path to file in container repository
+    :return:
+    """
     m = re.search(r"\.$", match)
     if m:
-        log.info(f"Found pure copy file {diff}!")
+        log.info(f"Found pure copy file {filename}!")
         log.info(m.group(0))
     else:
-        log.info(f"Found matching {diff}!")
+        log.info(f"Found matching {filename}!")
     with open(runtime_record_path(), 'a') as f:
         f.write(f"\n{format_runtime_task(filepath, match)},")
 
 
 def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
     """
-    creates an element of the runtime or error dictionary.
-    runtime if both paths are given, error otherwise.
+    defines the format of the runtime or error dictionary as json string.
+    runtime if both paths are given or pure-copy, error otherwise.
     uses Json formatting
     :return: a Json formatted python dictionary
     """
@@ -125,9 +83,9 @@ def format_runtime_task(subrepo_file: str, matching_container_file: str = None):
 
 def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None]):
     """
-    Log an error or critical event both to the error record and log.
+    Log a warning,  error or critical event both to the error record and log.
     :param log_msg: What message to print to console and log.
-    :param filepath: Which file did the error occur in.
+    :param filepath: Which file does the error refer to
     :param logfunction: PRE: must be warn, error or critical.
     :return:
     """
@@ -139,8 +97,8 @@ def write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None])
 
 def initiate_runtime_log():
     """
-     Walk through all the files and attempt to match them.
-     Record if you cannot match a file and save the matched pairs + status indicator in the working dir.
+     Walk through all the files in the contact_point folder and attempt to match them.
+     Record if you cannot match a file and save the matched pairs + status indicator in the runtime_record.
     :return:
     """
     for path in [runtime_record_path, error_record_path]:
@@ -183,74 +141,20 @@ class MissmatchedMarkerError(Exception):
     pass
 
 
-def linediffs(text1: str, text2: str):
-    deadline = constants()["per_file_diff_deadline"]
-    deadline = None if deadline == "None" else float(deadline)
-    dmp = dmp_module.diff_match_patch()
-    return dmp.diff_lineMode(text1, text2, deadline)
-
-
-def print_some_diffs(title, d, equality=True, deletion=True, markerContains=True, marker=configuration()["marker"]):
-    print(title)
-    print("_____________________")
-    print(len(d))
-    if equality:
-        print("Equality:")
-        if any(x[0] == 0 for x in d):
-            print(next(x[1] for x in d if x[0] == 0))
-        else:
-            print("No Equalities...")
-    if deletion:
-        print("Deletion:")
-        if any(x[0] == -1 for x in d):
-            print(next(x[1] for x in d if x[0] == -1))
-        else:
-            print("No Deletions...")
-    if markerContains:
-        print("Contains Marker:")
-        if any(marker in x[1] for x in d):
-            print(next(str(x[0]) for x in d if marker in x[1]) + "\n", next(x[1] for x in d if marker in x[1]))
-        else:
-            print("No Markers in any diffs...")
-
-
 def generate_merged_content(match: str, contact_point: str, contact_point_path: str):
     # TODO: Will have to add corner cases as we see them and add them to the test repository
     checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
-    # Anything added in between the markers will be positive here
-    # => This assumption does not hold. May morph, e.g., a button description in an XML file that comes after into the markers.
-    if "app_main.xml" in contact_point_path:
-        diffs = compute_line_diff(match, contact_point, do_log=True)
-    else:
-        diffs = compute_line_diff(match, contact_point)
-    if "app_main.xml" in contact_point_path:
-        print("app_main diffs before transformations:")
-        text = print_all_diffs(diffs)
-        with open(os.path.join(configuration()["working_dir"], "before_transformations.xml"), "w+", encoding="utf-8") as f:
-            f.write(text)
+    diffs = compute_line_diff(match, contact_point)
     # Match up any changed lines between unmodified and match and change these in diffs
     updated_code = compute_line_diff(unmodified_match_text, match)
     # Take changes to upgrade into account and turn them into equalities
     diffs = transform_diffs(updated_code, diffs)
-    if "app_main.xml" in contact_point_path:
-        print("app_main diffs after transformations:")
-        text = print_all_diffs(diffs)
-        with open(os.path.join(configuration()["working_dir"], "after_transformations.xml"), "w+", encoding="utf-8") as f:
-            f.write(text)
     return dmp_module.diff_match_patch().diff_text2(diffs)
 
-"""
-if not reduce(lambda value, el: value and el, results):
-    last_idx = match_filepath.rfind(os.sep)
-    write_error(f"Not all patches were applied for:{match_filepath[last_idx + 1:]}", match_filepath, log.warning)
-    print([str(p) for p in patches])
-    print(results)
-"""
 
-
-def compute_line_diff(text1, text2, deadline=None, do_log=False):
+def compute_line_diff(text1: str, text2: str, deadline: float=None):
     """
     pull the deadline out of the configs (if not provided) and pass onto line_diff
     preprocesses text1 and text2 to treat anything between markers as immutable
@@ -259,7 +163,7 @@ def compute_line_diff(text1, text2, deadline=None, do_log=False):
     if deadline is None:
         deadline = constants()["per_file_diff_deadline"]
         deadline = None if deadline == "None" else float(deadline)
-    diff = line_diff(group_marker_content(text1), group_marker_content(text2), deadline, do_log=do_log)
+    diff = line_diff(group_marker_content(text1), group_marker_content(text2), deadline)
     # undo any groupings
     ungrouped_diff = []
     for d in diff:
@@ -267,19 +171,19 @@ def compute_line_diff(text1, text2, deadline=None, do_log=False):
     return ungrouped_diff
 
 
-def transform_diffs(diff_update, diff_patched):
+def transform_diffs(diff_update: DiffList, diff_modified: DiffList):
     """
     Turns any deletion in diff_update that can be matched by an insertion in diff_changes into an equality.
     # TODO: Very naive approach, may want to refine as we go
     :param diff_update: Diff between unmodified and updated files
-    :param diff_patched: Diff between updated and patched files
+    :param diff_modified: Diff between updated and modified files
     :return: 
     """
     for update in diff_update:
         if update[0] == 1:
             # Search for equivalent deletion in diffs and turn into equality
             new_element = ()
-            for idx, d in enumerate(diff_patched):
+            for idx, d in enumerate(diff_modified):
                 if d[0] == -1:
                     if d[1].strip() == update[1].strip():
                         new_element = (0, d[1])
@@ -288,19 +192,19 @@ def transform_diffs(diff_update, diff_patched):
                         log.debug("The Insertion did not match the deletion:\n", update[1], "!=\n", d[1])
             if new_element != ():
                 if idx == 0:
-                    diff_patched = [new_element] + diff_patched[idx + 1:]
-                if idx == len(diff_patched) - 1:
-                    diff_patched = diff_patched[:idx] + [new_element]
+                    diff_modified = [new_element] + diff_modified[idx + 1:]
+                if idx == len(diff_modified) - 1:
+                    diff_modified = diff_modified[:idx] + [new_element]
                 else:
-                    diff_patched = diff_patched[0:idx] + [new_element] + diff_patched[idx + 1:]
-    return diff_patched
+                    diff_modified = diff_modified[0:idx] + [new_element] + diff_modified[idx + 1:]
+    return diff_modified
 
 
-def group_marker_content(text):
+def group_marker_content(text: str):
     """
-    In order to make sure that the contents between the marker are treated as one unchanged block, we concatenate
-    the lines with ||<marker>|| that are inbetween the markers. This way, this content is treated as a single line
-    when using dmp.diff_linesToChars
+    In order to make sure that the contents between the marker are treated as one immutable block, we concatenate
+    the lines with ||<marker>|| that are inbetween the 'start' and 'end' markers. This way, this content is treated
+    as a single line when using dmp.diff_linesToChars
     :return: text with anything between the markers regrouped in a single line
     """
     marker = configuration()['marker']
@@ -319,7 +223,7 @@ def group_marker_content(text):
     return "\n".join(new_lines)
 
 
-def ungroup_marker_content(text):
+def ungroup_marker_content(text: str):
     """
     Inverse of 'group_marker_content'
     :return:
@@ -327,7 +231,7 @@ def ungroup_marker_content(text):
     return text.replace(f"||{configuration()['marker']}||", "\n")
 
 
-def line_diff(text1, text2, deadline, do_log=False):
+def line_diff(text1: str, text2: str, deadline: float):
     """
     Pre: text1 and/or text2 have been passed through 'group_marker_content' if they contain marked content
     :param deadline: timeconstraint for the diff in [s], may be None
@@ -342,24 +246,16 @@ def line_diff(text1, text2, deadline, do_log=False):
 
     # Convert the diff back to original text.
     dmp.diff_charsToLines(diffs, linearray)
-    if do_log:
-        print("app_main line_diffs before clean_up_semantics")
-        print_all_diffs(diffs)
+    log.debug("line_diffs:\n" + print_all_diffs(diffs))
     # Eliminate freak matches (e.g. blank lines)
     # dmp.diff_cleanupSemantic(diffs)
-    # This was resulting in diffs that were finer than line by line.
+    # => This was resulting in diffs that were finer than line by line, so we consciously omit it.
     return diffs
 
 
 def run():
-    # create runtime record
-    # iterate through runtime log
-    # for each entry that has not yet run, generate patched file
-    # replace 'match'
-    # (any error handling that will become apparent)
-    # update runtime log
     initiate_runtime_log()
-    # assume the entire record can be kept in memory for now
+    # assume the entire record can be kept in memory
     with open(runtime_record_path(), "r") as f:
         records = json.load(f)
     current_record = 0

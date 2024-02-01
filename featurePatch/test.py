@@ -5,7 +5,31 @@
 #
 ###################
 
-from featurePatch.android.applyFeature import generate_merged_content, compute_line_diff, print_some_diffs, transform_diffs
+from featurePatch.android.applyFeature import compute_line_diff, transform_diffs
+
+
+def print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
+    print(title)
+    print("_____________________")
+    print(len(d))
+    if equality:
+        print("Equality:")
+        if any(x[0] == 0 for x in d):
+            print(next(x[1] for x in d if x[0] == 0))
+        else:
+            print("No Equalities...")
+    if deletion:
+        print("Deletion:")
+        if any(x[0] == -1 for x in d):
+            print(next(x[1] for x in d if x[0] == -1))
+        else:
+            print("No Deletions...")
+    if marker_contains:
+        print("Contains Marker:")
+        if any(marker in x[1] for x in d):
+            print(next(str(x[0]) for x in d if marker in x[1]) + "\n", next(x[1] for x in d if marker in x[1]))
+        else:
+            print("No Markers in any diffs...")
 
 marker = "################"
 
