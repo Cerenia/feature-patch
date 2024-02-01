@@ -18,7 +18,7 @@ def init_cygwin():
     )
 
 
-def execute(cmd, retcodes=None):
+def execute(cmd, retcodes=None, do_log=True):
     """
     Executes and logs a plumbum command.
     See: https://plumbum.readthedocs.io/en/latest/local_commands.html
@@ -28,6 +28,7 @@ def execute(cmd, retcodes=None):
         stdout
     :param cmd: the plumbum command to execute
     :param retcodes: None or a tuple of accepted return codes
+    :param do_log: Flag to turn logging of the command on or off.
     :return: retcode, stdout, stderr OR stdout
     """
     global run_command_counter
@@ -36,7 +37,8 @@ def execute(cmd, retcodes=None):
     (rc, stdout, stderr) = cmd.run(retcode=retcodes)
     # inspect.stack()[1][3] is the name of the calling function
     # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-    log.info(f"function:{inspect.stack()[1][3]} \n{cmd} \nOutput:\n {stdout}")
+    if do_log:
+        log.info(f"function:{inspect.stack()[1][3]} \n{cmd} \nOutput:\n {stdout}")
     if retcodes is None:
         return stdout
     else:

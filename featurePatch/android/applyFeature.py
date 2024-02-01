@@ -55,9 +55,12 @@ from plumbum import local
 
 def print_all_diffs(diffs):
     title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
+    result = ""
     for d in diffs:
         print(f"{title_map[d[0]]}:")
         print(d[1])
+        result = result + f"{title_map[d[0]]}:\n" + d[1] + "\n"
+    return result
 
 
 def match_files(subrepo_dir: str, container_dir: str):
@@ -217,11 +220,25 @@ def generate_merged_content(match: str, contact_point: str, contact_point_path: 
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
     # Anything added in between the markers will be positive here
-    diffs = compute_line_diff(match, contact_point)
+    # => This assumption does not hold. May morph, e.g., a button description in an XML file that comes after into the markers.
+    if "app_main.xml" in contact_point_path:
+        diffs = compute_line_diff(match, contact_point, do_log=True)
+    else:
+        diffs = compute_line_diff(match, contact_point)
+    if "app_main.xml" in contact_point_path:
+        print("app_main diffs before transformations:")
+        text = print_all_diffs(diffs)
+        with open(os.path.join(configuration()["working_dir"], "before_transformations.xml"), "w+", encoding="utf-8") as f:
+            f.write(text)
     # Match up any changed lines between unmodified and match and change these in diffs
     updated_code = compute_line_diff(unmodified_match_text, match)
     # Take changes to upgrade into account and turn them into equalities
     diffs = transform_diffs(updated_code, diffs)
+    if "app_main.xml" in contact_point_path:
+        print("app_main diffs after transformations:")
+        text = print_all_diffs(diffs)
+        with open(os.path.join(configuration()["working_dir"], "after_transformations.xml"), "w+", encoding="utf-8") as f:
+            f.write(text)
     return dmp_module.diff_match_patch().diff_text2(diffs)
 
 """
@@ -233,15 +250,21 @@ if not reduce(lambda value, el: value and el, results):
 """
 
 
-def compute_line_diff(text1, text2, deadline=None):
+def compute_line_diff(text1, text2, deadline=None, do_log=False):
     """
     pull the deadline out of the configs (if not provided) and pass onto line_diff
+    preprocesses text1 and text2 to treat anything between markers as immutable
     :return: line-level diff turning text1 into text2
     """
     if deadline is None:
         deadline = constants()["per_file_diff_deadline"]
         deadline = None if deadline == "None" else float(deadline)
-    return line_diff(text1, text2, deadline)
+    diff = line_diff(group_marker_content(text1), group_marker_content(text2), deadline, do_log=do_log)
+    # undo any groupings
+    ungrouped_diff = []
+    for d in diff:
+        ungrouped_diff.append((d[0], ungroup_marker_content(d[1])))
+    return ungrouped_diff
 
 
 def transform_diffs(diff_update, diff_patched):
@@ -273,7 +296,44 @@ def transform_diffs(diff_update, diff_patched):
     return diff_patched
 
 
-def line_diff(text1, text2, deadline):
+def group_marker_content(text):
+    """
+    In order to make sure that the contents between the marker are treated as one unchanged block, we concatenate
+    the lines with ||<marker>|| that are inbetween the markers. This way, this content is treated as a single line
+    when using dmp.diff_linesToChars
+    :return: text with anything between the markers regrouped in a single line
+    """
+    marker = configuration()['marker']
+    new_lines = []
+    grouping = None
+    for line in text.split("\n"):
+        if grouping is not None:
+            grouping = grouping + f"||{marker}||" + line
+            if marker in line and "end" in line:
+                new_lines.append(grouping)
+                grouping = None
+        elif marker in line and "start" in line:
+            grouping = line
+        else:
+            new_lines.append(line)
+    return "\n".join(new_lines)
+
+
+def ungroup_marker_content(text):
+    """
+    Inverse of 'group_marker_content'
+    :return:
+    """
+    return text.replace(f"||{configuration()['marker']}||", "\n")
+
+
+def line_diff(text1, text2, deadline, do_log=False):
+    """
+    Pre: text1 and/or text2 have been passed through 'group_marker_content' if they contain marked content
+    :param deadline: timeconstraint for the diff in [s], may be None
+    :param do_log:
+    :return:
+    """
     dmp = dmp_module.diff_match_patch()
     # Scan the text on a line-by-line basis
     (text1, text2, linearray) = dmp.diff_linesToChars(text1, text2)
@@ -282,8 +342,12 @@ def line_diff(text1, text2, deadline):
 
     # Convert the diff back to original text.
     dmp.diff_charsToLines(diffs, linearray)
+    if do_log:
+        print("app_main line_diffs before clean_up_semantics")
+        print_all_diffs(diffs)
     # Eliminate freak matches (e.g. blank lines)
-    dmp.diff_cleanupSemantic(diffs)
+    # dmp.diff_cleanupSemantic(diffs)
+    # This was resulting in diffs that were finer than line by line.
     return diffs
 
 
@@ -307,10 +371,11 @@ def run():
             container_path = records[current_record]["match"]
             if re.search(r"\.$", container_path) is not None or re.search(r"/.$", container_path) is not None:
                 # Pure copy file, simply copy
-                execute(local["cp"][subrepo_path, container_path])
+                execute(local["cp"][subrepo_path, container_path], do_log=False)
+                execute(local["git"]["add", container_path], do_log=False)
                 log.info(f"Copied {os.path.basename(subrepo_path)}...")
             else:
-                log.info(f"Working on creating a merged version of {os.path.basename(subrepo_path)}...")
+                log.info(f"Creating a merged version of {os.path.basename(subrepo_path)}...")
                 with open(container_path, "r", encoding="utf-8") as f:
                     match = f.read()
                 with open(records[current_record]["contact_point"], "r", encoding="utf-8") as f:
