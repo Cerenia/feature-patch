@@ -34,7 +34,12 @@ def src_string_folder():
     return configuration()['android_string_root']
 
 
-def map_contact_points_path_to_container(filepath):
+def map_contact_points_path_to_container(filepath: str):
+    """
+    For a file in the 'contact_points' folder, create the resulting filepath in the container.
+    :param filepath: The path to the file in the contact points folder
+    :return: the equivalent filepath in the container repository
+    """
     if "\\" in filepath:
         sep = "\\"
     elif "/" in filepath:
