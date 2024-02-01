@@ -353,10 +353,10 @@ def checkout_subrepo_migration_branch(tag: str):
     Checks out the migration branch for the specified tag.
     :param tag: The tag for which to checkout the migration branch.
     """
-    _checkout_subprepo(_migration_branch_name(tag))
+    _checkout_subrepo(_migration_branch_name(tag))
 
 
-def _checkout_subprepo(subrepo_branch: str):
+def _checkout_subrepo(subrepo_branch: str):
     """
     Clones a different branch of the subrepo.
     :param subrepo_branch: which branch to switch to

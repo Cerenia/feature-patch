@@ -33,7 +33,7 @@ def _match_files(subrepo_dir: str, container_dir: str):
                 marker = configuration()["marker"]
                 # '$^' makes sure that there is no content between the markers indicating that the entire file should be copied
                 #               Java-style comments
-                p = rf"{marker}\s*start\s*$\n^\s*//{marker}\s*end|" \ 
+                p = rf"{marker}\s*start\s*$\n^\s*//{marker}\s*end|" \
                     rf"{marker}\s*start\s*-->\s*$\n^\s*<!--\s*{marker}\s*end" # XML comments
                 found_match = re.search(p, content, re.MULTILINE)
                 if found_match:

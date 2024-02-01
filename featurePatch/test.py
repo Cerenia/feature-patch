@@ -6,6 +6,7 @@
 ###################
 
 from featurePatch.android.applyFeature import _compute_line_diff, _transform_diffs
+from .util import configuration
 
 
 def print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
