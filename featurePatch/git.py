@@ -208,14 +208,15 @@ def add_subrepo():
     cwd = os.getcwd()
     _navigate_to(CONTAINER_ROOT_PATH)
     output = execute(git["status"])
-    _navigate_to(cwd)
     # Search for subrepo directory in output
     pattern = fr"{_subrepo_name()}"
     has_match = re.search(pattern, output)
     if has_match is not None:
         execute(git["add", _path_join(_subrepo_name(), "*")])
         execute(git["commit", "-m", "changes in subrepository"])
+        _navigate_to(cwd)
         return True
+    _navigate_to(cwd)
     return False
 
 
@@ -262,7 +263,7 @@ def push_subrepo(message: str):
     _navigate_to(cwd)
 
 
-def create_migration_branch(suffix: str=None):
+def create_subrepo_migration_branch(suffix: str=None):
     """
     We want to keep the main branch of the subrepo clean so we add the extraction commits to a fresh branch.
     @see: https://github.com/ingydotnet/git-subrepo/blob/110b9eb13f259986fffcf11e8fb187b8cce50921/lib/git-subrepo#L731
@@ -292,9 +293,18 @@ def _create_remote_subrepo_branch(branchname: str):
     output = execute(local["ls"])
     _navigate_to(output.strip())
     execute(git["checkout", "-b", branchname])
-    execute(git["push", "--set-upstream", "origin", branchname])
+    execute(git["push", GIT_VERBOSITY, "--repo", _authenticated_subrepo_url(), "--set-upstream", "origin", branchname])
     _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
     execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
+
+
+def delete_local_migration_branch(suffix: str = None):
+    """
+    Remove local migration branch
+    :param suffix: added to the 'migration' name if provided
+    """
+    _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
+    execute(git["branch", GIT_VERBOSITY, "-D", _migration_branch_name(suffix)])
 
 
 def merge_migration_branch(suffix: str = None):
@@ -339,8 +349,9 @@ def upgrade_container_to(tag: str, main_branch_name="main"):
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version
     execute(git["checkout", f"tags/{tag}", "-b", tag])
+    # Create 'unmodified_branch' &
     # Merge current main into 'unmodified_branch'
-    execute(git["checkout", constants()["unmodified_branch"]])
+    execute(git["checkout", "-b", constants()["unmodified_branch"]])
     execute(git["merge", main_branch_name])
     # Merge into main branch to note latest sync.
     execute(git["checkout", main_branch_name])

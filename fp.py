@@ -12,10 +12,12 @@ def main():
     # Revert
     #clean_subrepo()
     #_checkout_subrepo("master")
-    # TODO: Implement deletion of local branches
+    #delete_local_migration_branch("v1.1.1")
+
 
     # Flow example
-    create_migration_branch("v1.1.1")
+    """
+    create_subrepo_migration_branch("v1.1.1")
     checkout_subrepo_migration_branch("v1.1.1")
     extract_feature()
     push_subrepo("Extracted contact points")
@@ -23,9 +25,18 @@ def main():
     checkout_subrepo_migration_branch("v1.1.1")
     applyFeature()
     clear_contact_points()
+    """
 
-    # Fix any issues by hand
-    # Merge subrepo back into master & checkout master (Implementation still TODO)
+    clear_contact_points()
+    commit_subrepo("Contact points removed.")
+
+    #### Fix any remaining merge issues by hand
+
+    #push_subrepo("Upgrade to v1.1.1 functional.")
+    #_checkout_subrepo("master")
+    #merge_migration_branch("v1.1.1")
+
+    # TODO: push container migration
     # Continue development on the new v1.1.1 container branch until next upgrade.
     pass
 

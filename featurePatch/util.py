@@ -48,7 +48,9 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     # inspect.stack()[1][3] is the name of the calling function
     # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
     if do_log:
-        log.info(f"function:{inspect.stack()[1][3]} \n{cmd} \nOutput:\n {stdout}")
+        def formatstring_stdout(stdout_arg):
+            return "" if stdout_arg.strip().empty() else f"\nOutput:\n {stdout_arg}"
+        log.info(f"function:{inspect.stack()[1][3]} \n{cmd} {formatstring_stdout(stdout)}")
     if retcodes is None:
         return stdout
     else:
