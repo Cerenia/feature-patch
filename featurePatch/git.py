@@ -321,7 +321,7 @@ def merge_migration_branch(suffix: str = None):
     if not _isdir(FEATURE_ROOT_PATH):
         log.critical("Subrepository missing from container. Attempted migration branch merge aborted.")
         exit(1)
-    with open(_path_join(FEATURE_ROOT_PATH, ".gitrepo"), "r") as f:
+    with open(os.path.join(FEATURE_ROOT_PATH, ".gitrepo"), "r") as f:
         lines = f.readlines()
     idx = 0
     while "branch" not in lines[idx]:
@@ -364,10 +364,10 @@ def checkout_subrepo_migration_branch(tag: str):
     Checks out the migration branch for the specified tag.
     :param tag: The tag for which to checkout the migration branch.
     """
-    _checkout_subrepo(_migration_branch_name(tag))
+    checkout_subrepo(_migration_branch_name(tag))
 
 
-def _checkout_subrepo(subrepo_branch: str):
+def checkout_subrepo(subrepo_branch: str):
     """
     Clones a different branch of the subrepo.
     :param subrepo_branch: which branch to switch to
