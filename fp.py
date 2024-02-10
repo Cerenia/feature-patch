@@ -27,7 +27,7 @@ def main():
     clear_contact_points()
     """
 
-    clear_contact_points()
+    #clear_contact_points()
     commit_subrepo("Contact points removed.")
 
     #### Fix any remaining merge issues by hand

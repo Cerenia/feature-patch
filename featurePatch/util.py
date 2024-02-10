@@ -45,11 +45,12 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
     run_command_counter = run_command_counter + 1
     (rc, stdout, stderr) = cmd.run(retcode=retcodes)
-    # inspect.stack()[1][3] is the name of the calling function
-    # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
     if do_log:
         def formatstring_stdout(stdout_arg):
-            return "" if stdout_arg.strip().empty() else f"\nOutput:\n {stdout_arg}"
+            # Empty strings are 'falsy'
+            return f"\nOutput:\n {stdout_arg}" if stdout_arg.strip() else ""
+        # inspect.stack()[1][3] is the name of the calling function
+        # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
         log.info(f"function:{inspect.stack()[1][3]} \n{cmd} {formatstring_stdout(stdout)}")
     if retcodes is None:
         return stdout
