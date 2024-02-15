@@ -1,21 +1,25 @@
 # feature-patch
-Utility to facilitate patching a dangling feature onto evolving Codebases
+Utility to facilitate patching a dangling feature onto evolving Codebases.
 
-- terminology
+This project uses the [git-subrepo](https://github.com/ingydotnet/git-subrepo) library to manage nested repositories, please refer to their installation instructions. The scripts of feature-patch thus expect to be run in a **bash** shell with an accessible [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), and git-subrepo installation in the path.
+
+The project was tested with the following shells:
+- Windows:
+  - Git-bash
+  - WLS Ubuntu 22.04.3 LTS (TODO)
+- Linux (TODO)
+
+## Terminology
+
+
 
 ## Installation
 
-Create a virtual environment and install the dependencies by running:
+Install the dependencies (preferably in a [Python virtualenv](https://docs.python.org/3/library/venv.html)) by running:
 
 ```
 pip install -r requirements.txt
 ```
-
-We also use git subrepo for operations on the nested repository. You must have a working
-installation on your system and linked in your path: 
-
-https://github.com/ingydotnet/git-subrepo/tree/master
-
 
 ## Configuration
 
