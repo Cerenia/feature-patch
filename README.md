@@ -23,11 +23,49 @@ The first use-case was an Android project and there is thus currently a bias tow
 
 This utility expects two repositories. The evolving Codebase, which is out of control of the feature developers, will be called the `container` in the documentation. The nested repository, in turn, will be called `feature`.
 
-To facilitate the migration process, the interfaces between the feature and the container should be minimized. Specifically, any addition to files of the container, which may change on upgrades, should have minimal code which belongs to the feature. This implies designing well defined interfaces wherever possible and factoring any logic out of the container files. The logic should be accumulated in one place, which in our case will be in the feature subrepository.
+The `container`, a forked repository, will maintain an untouched `main` branch, which can be upgraded easily through a fetch. 
+Each version of the 
 
-In order to have a clear labeling, any code inserted into the container which calls feature logic 
+To facilitate the migration process, interfaces between the `feature` and the `container` should be minimal. Specifically, any addition to files of the container, which may change on upgrades, should have a small `feature` footstep. This implies designing well defined interfaces wherever possible and factoring any logic out of the `container` files. Any additional logic should be accumulated in the `feature` subrepository.
 
+### Prerequisites
 
+In order to have a clear labeling, any code inserted into the `container` which calls `feature` logic, or adds elements, should be enclosed by comments containing a pseudorandom `marker` string (which must be consitent throughout the feature) and the words `start` and `end`, acting as `marker-brackets`. 
+
+For example: 
+```
+//xP0w1dFQZBvxSHALdyEU MyGreatFeature start
+
+myFeatureMethodCall(c: ContainerArg);
+
+//xP0w1dFQZBvxSHALdyEU MyGreatFeature end
+```
+
+This facilitates the extraction of the interface before a migration and additionally allows for easy external auditing of any components that were added to the `container` for the feature.
+
+Any added logic shoud be cleanly factored out to  the `feature` subrepository.
+
+Sometimes (e.g, when adding new UI elements) a new file must be added to the contaner. Then, the file should contain a `marker-bracket` pair without any content.
+
+For example:
+```
+<!--xP0w1dFQZBvxSHALdyEU MyGreatFeature start-->
+<!--xP0w1dFQZBvxSHALdyEU MyGreatFeature end-->
+```
+
+### Extraction
+
+Before a `container` upgrade feature-patch will extract the interface. 
+
+For this a feature `migration-branch` will be created and checked out, consisting of the current state of the `feature`. Then the interface will be extracted into a folder inside the `feature` subrepository called `contact-points` whose internal structure encodes information on where in the container the files were found. The interface consists of any file that contains the marker. 
+
+Here, a sanity check w.r.t `marker-bracket` matchings is performed and any noncompliant files are recorded in an error log in the working directory. 
+
+Check and fix these files manually before continuing to the migration and application stages.
+
+### Migration
+
+After pushing the interface to the new branch, the `main` branch of the `container` is upgraded to the desired tag and a new branch for the reapplication and continuous development of this version is created (named after the new tag). There, the feature `migration-branch` which now includes the contact points are reinserted into the new `container` branch.
 
 ## Installation
 
