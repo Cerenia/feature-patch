@@ -14,7 +14,19 @@ def extract(tag):
     extract_feature()
 
 
-def apply(tag):
+def migrate():
+    pass
+
+
+def match():
+    pass
+
+
+def patch():
+    pass
+
+
+def patch(tag):
     print(f"#####\n##Applying to tag {tag}\n#####\n")
     push_subrepo("Extracted contact points")
     upgrade_container_to(tag)
@@ -55,9 +67,9 @@ def main():
     extract_parser.add_argument('tag', help='Tag to which to migrate the container')
     extract_parser.set_defaults(func=extract)
 
-    apply_parser = subparsers.add_parser('apply', help="Updates the container to the specified tag and attempts to apply the interface back onto the updated code.")
+    apply_parser = subparsers.add_parser('patch', help="Updates the container to the specified tag and attempts to apply the interface back onto the updated code.")
     apply_parser.add_argument('tag', help='Tag to which to migrate the container')
-    apply_parser.set_defaults(func=apply)
+    apply_parser.set_defaults(func=patch)
 
     merge_parser = subparsers.add_parser('merge', help="Merges any changes that occured to adapt to the update back into the master branch of the subrepository.")
     merge_parser.add_argument('tag', help='Tag to which to migrate the container')
