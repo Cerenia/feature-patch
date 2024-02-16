@@ -1,8 +1,9 @@
 # feature-patch
-Utility to facilitate patching a dangling feature onto evolving Codebases.
+Python utility facilitating patching a dangling feature onto evolving codebases.
 
 This utility is targeted at researchers working with open source projects they may not have direct influence on. 
-It aims to automate the process of upgrading to a new version of the codebase as much as possible, such that the focus of the developers can be concentrated on the final state of the codebase, instead of intermediate steps that would come up in traditional rebasing and may ultimately not be of importance. 
+
+It aims to automate the process of upgrading to a new version of the codebase as much as possible, such that the focus of the developers can be concentrated on the final state of the codebase, instead of intermediate steps that would come up in traditional rebasing which may ultimately not be of importance. 
 
 (TODO: Do we need a more extensive intro?)
 
@@ -14,11 +15,17 @@ The project was tested with the following shells:
   - WLS Ubuntu 22.04.3 LTS (TODO)
 - Linux (TODO)
 
-## Terminology and Principle
+We ultimately strive for a modular implementation which lends itself to be extended to various codebases and welcome contributions. 
+
+The first use-case was an Android project and there is thus currently a bias towards preexisting structures (e.g., folder hierarchies) found in these environments.
+
+## Terminology and Design Principles
 
 This utility expects two repositories. The evolving Codebase, which is out of control of the feature developers, will be called the `container` in the documentation. The nested repository, in turn, will be called `feature`.
 
-For optimal efficacy
+To facilitate the migration process, the interfaces between the feature and the container should be minimized. Specifically, any addition to files of the container, which may change on upgrades, should have minimal code which belongs to the feature. This implies designing well defined interfaces wherever possible and factoring any logic out of the container files. The logic should be accumulated in one place, which in our case will be in the feature subrepository.
+
+In order to have a clear labeling, any code inserted into the container which calls feature logic 
 
 
 
