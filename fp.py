@@ -22,9 +22,11 @@ def match():
     pass
 
 
-def patch():
+def apply():
     pass
 
+def configure():
+    pass
 
 def patch(tag):
     print(f"#####\n##Applying to tag {tag}\n#####\n")
@@ -77,6 +79,15 @@ def main():
 
     config_update_parser = subparsers.add_parser('update_config_template', help="Updates the configuration template with any new keys present in the config.yml file with their associated comment.")
     config_update_parser.set_defaults(func=add_to_config_template)
+
+    migrate_parser = subparsers.add_parser('migrate',  help="")
+    migrate_parser.set_defaults(func=migrate)
+
+    match_parser = subparsers.add_parser('match', help="")
+    match_parser.set_defaults(func=match)
+
+    patch_parser = subparsers.add_parser('apply', help="")
+    patch_parser.set_defaults(func=patch)
     
 
     # CLI TODO:
