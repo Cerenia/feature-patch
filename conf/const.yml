@@ -1,5 +1,5 @@
-# Any static values that are not user dependent and thus not sensitive. A user may still have reasons to edit these
-# but they are generally not expected to change
+# Any static values that are not user dependent and thus not sensitive. A user may still have reasons to edit these but they are generally not expected to change
+
 migration_branch_base_name: migration
 unmodified_file_base_name: unmodified
 # Expects container to always have the unmodified raw branch onto which the last patch was applied to be the master branch

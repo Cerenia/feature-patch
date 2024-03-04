@@ -1,11 +1,14 @@
-### User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are TODO: configurable by the cli or through manual editing
+### User dependent configuration, may contain potentially sensitive data (thus part of .gitignore). Values are configurable by the cli or through manual editing
+
 # The top level directory path containing the container Android source code
 android_src_root: TODO
-# Directory paths to layouts, drawables, strings
+# Directory path layouts
 android_layout_root: TODO
+# Directory path drawables
 android_drawable_root: TODO
+# Directory path strings
 android_string_root: TODO
-# The top level directory of the container Application project
+# The top level directory of the container application project
 container_git_root: TODO
 # The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_layout_root>)
 feature_git_root: TODO

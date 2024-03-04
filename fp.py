@@ -1,3 +1,5 @@
+import yaml
+
 from featurePatch.android.extractFeature import extract_feature
 from featurePatch.android.applyFeature import run as applyFeature
 from featurePatch.util import clear_contact_points, add_to_config_template
@@ -5,6 +7,7 @@ from featurePatch.git import *
 from featurePatch.git import checkout_subrepo
 from featurePatch.log import *
 import argparse
+import re
 
 
 def extract(tag):
@@ -25,8 +28,46 @@ def match():
 def apply():
     pass
 
-def configure():
+
+"""
+def configure(config_filepath):
+    #TODO add a config CLI filepath arg instead of assuming
+    #TODO: this should come from the parser
+    with open(config_filepath, 'r') as f:
+        initial_config = yaml.safe_load(f)
+        config_lines = f.readlines()
+
+    for field, value in vars(args).items():
+        if value is not None:
+            initial_config[field] = value
+
+    # rewrite file and preserve comments
+    for line in config_lines:
+        if not line.strip().startswith('#'):
+            if ':' in line:
+                key = line.split(':')[0]
+                #TODO: Continue
+            elif line.strip() != "":
+                raise Exception(f"Something is funky in your config fine, expected a key value pair or comment, instead found:\n {line}")
     pass
+"""
+
+
+def extract_config_fields(config_filepath):
+    fields = dict()
+    with open(config_filepath, 'r') as f:
+        config = f.read()
+    matches = re.finditer(r'(?P<comment>^#[^\n]*)\n(?P<field>\w+[ \t]*:)|(?P<lone_field>\w+[ \t]*:)', config, re.MULTILINE)
+    for match in matches:
+        lone_field = match.group('lone_field')
+        if lone_field is not None:
+            print(lone_field)
+        else:
+            comment = match.group('comment')
+            field = match.group('field')
+            if comment is not None:
+                print(f'{comment}\n{field}')
+
 
 def patch(tag):
     print(f"#####\n##Applying to tag {tag}\n#####\n")
@@ -61,6 +102,8 @@ def main():
     python fp.py merge v1.1.1
     -> Continue coding on the new branch
     """
+
+    extract_config_fields('./conf/config_template.yml')
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
@@ -98,7 +141,10 @@ def main():
     # (Update config template?)
 
     args = parser.parse_args()
-    args.func(args.tag) if "tag" in vars(args).keys() else args.func()
+    #TODO: fix
+    #args.func(args.tag) if "tag" in vars(args).keys() else args.func()
+
+
 
 
 if __name__ == '__main__':
