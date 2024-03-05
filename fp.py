@@ -29,44 +29,50 @@ def apply():
     pass
 
 
-"""
-def configure(config_filepath):
-    #TODO add a config CLI filepath arg instead of assuming
-    #TODO: this should come from the parser
-    with open(config_filepath, 'r') as f:
-        initial_config = yaml.safe_load(f)
-        config_lines = f.readlines()
+def configure(config_filepath, args):
+    with open(config_filepath, "r") as f:
+        lines = f.readlines()
+    argdict = vars(args)
+    new_lines = []
+    for line in lines:
+        if ':' in line:
+            key = line.split(':')[0].strip()
+            if key in argdict.keys():
+                new_value = argdict[key]
+                new_lines.append(f'{key}: {new_value}')
+                print(f"Updating configuration {key} to:\n{new_value}")
+            else:
+                new_lines.append(line)
+        else:
+            new_lines.append(line)
+    with open(config_filepath, 'w'):
+        f.writelines(new_lines)
 
-    for field, value in vars(args).items():
-        if value is not None:
-            initial_config[field] = value
 
-    # rewrite file and preserve comments
-    for line in config_lines:
-        if not line.strip().startswith('#'):
-            if ':' in line:
-                key = line.split(':')[0]
-                #TODO: Continue
-            elif line.strip() != "":
-                raise Exception(f"Something is funky in your config fine, expected a key value pair or comment, instead found:\n {line}")
-    pass
-"""
+def enrich_with_config_options(config_filepath, parser):
+    fields = extract_config_fields(config_filepath)
+    for t in fields:
+        parser.add_argument(f"--{t[0]}", help=t[1])
 
 
 def extract_config_fields(config_filepath):
-    fields = dict()
+    """
+    :param config_filepath: Where to find the configuration file.
+    :return: list(field,comment), where comment may be empty
+    """
+    fields = []
     with open(config_filepath, 'r') as f:
         config = f.read()
     matches = re.finditer(r'(?P<comment>^#[^\n]*)\n(?P<field>\w+[ \t]*:)|(?P<lone_field>\w+[ \t]*:)', config, re.MULTILINE)
     for match in matches:
         lone_field = match.group('lone_field')
         if lone_field is not None:
-            print(lone_field)
+            fields.append((lone_field[:-1].strip(),""))
         else:
-            comment = match.group('comment')
-            field = match.group('field')
-            if comment is not None:
-                print(f'{comment}\n{field}')
+            comment = match.group('comment').strip()[1:]
+            field = match.group('field')[:-1].strip()
+            fields.append((field, comment))
+    return fields
 
 
 def patch(tag):
@@ -103,8 +109,6 @@ def main():
     -> Continue coding on the new branch
     """
 
-    extract_config_fields('./conf/config_template.yml')
-
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
@@ -131,7 +135,9 @@ def main():
 
     patch_parser = subparsers.add_parser('apply', help="")
     patch_parser.set_defaults(func=patch)
-    
+
+    enrich_with_config_options("./conf/config.yml", parser)
+
 
     # CLI TODO:
     # Deduce configs (some automation for the obvious things)
@@ -141,10 +147,12 @@ def main():
     # (Update config template?)
 
     args = parser.parse_args()
+
+    configure("./conf/config.yml", args)
+
+
     #TODO: fix
     #args.func(args.tag) if "tag" in vars(args).keys() else args.func()
-
-
 
 
 if __name__ == '__main__':
