@@ -37,15 +37,15 @@ def configure(config_filepath, args):
     for line in lines:
         if ':' in line:
             key = line.split(':')[0].strip()
-            if key in argdict.keys():
+            if key in argdict.keys() and argdict[key] is not None:
                 new_value = argdict[key]
-                new_lines.append(f'{key}: {new_value}')
+                new_lines.append(f'{key}: {new_value}\n')
                 print(f"Updating configuration {key} to:\n{new_value}")
             else:
                 new_lines.append(line)
         else:
             new_lines.append(line)
-    with open(config_filepath, 'w'):
+    with open(config_filepath, 'w') as f:
         f.writelines(new_lines)
 
 
@@ -55,13 +55,13 @@ def enrich_with_config_options(config_filepath, parser):
         parser.add_argument(f"--{t[0]}", help=t[1])
 
 
-def extract_config_fields(config_filepath):
+def extract_config_fields(config_template):
     """
-    :param config_filepath: Where to find the configuration file.
+    :param config_template: Where to find the configuration file.
     :return: list(field,comment), where comment may be empty
     """
     fields = []
-    with open(config_filepath, 'r') as f:
+    with open(config_template, 'r') as f:
         config = f.read()
     matches = re.finditer(r'(?P<comment>^#[^\n]*)\n(?P<field>\w+[ \t]*:)|(?P<lone_field>\w+[ \t]*:)', config, re.MULTILINE)
     for match in matches:
@@ -136,7 +136,10 @@ def main():
     patch_parser = subparsers.add_parser('apply', help="")
     patch_parser.set_defaults(func=patch)
 
-    enrich_with_config_options("./conf/config.yml", parser)
+    configure_parser = subparsers.add_parser('configure', help="configure config.yml with optional named arguments. Will create these arguments from the configuration template.")
+    configure_parser.add_argument('--template_filepath', help="Relative or absolute path to the configuration template. Default: './conf/config_template'", default="./conf/config_template.yml")
+
+    enrich_with_config_options("./conf/config_template.yml", configure_parser)
 
 
     # CLI TODO:
