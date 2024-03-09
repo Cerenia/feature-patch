@@ -22,16 +22,15 @@ github_username: TODO
 feature_github_access_token: TODO
 # The marker used in the container wherever feature code is integrated. Used to extract the contact points.
 marker: TODO
-# The path to *this* directory
+# The path to *this*/.. directory. CLI expects this as the working dir.
 python_root: TODO
-working_dir: TODO
 # Flag to pass to git subrepo, reflected in logging
-subrepo_verbosity: TODO
+subrepo_verbosity: -dv
 # Flag for Git
-git_verbosity: TODO
+git_verbosity: -dv
 # indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
-windows: TODO
+windows: False
 # Where to insert matching context. -1 => before the insert, 1 => after the insert
-diff_context: TODO
+diff_context: 1
 # The number of lines to grab for the context. Will grab *at most* this many non-whitespace lines.
-diff_context_lines: TODO
+diff_context_lines: 5

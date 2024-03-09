@@ -23,15 +23,37 @@ git = local['git']
 #
 ###
 
-FEATURE_ROOT_PATH = configuration()["feature_git_root"]
-FEATURE_REMOTE_URL = configuration()["feature_git_remote"]
-FEATURE_ACCESS_TOKEN = configuration()["feature_github_access_token"]
-FEATURE_TMP_CHECKOUT_LOCATION = configuration()["feature_git_temp_root"]
-FEATURE_TMP_DIRNAME = constants()["subrepo_temporary_directoryname"]
-SUBREPO_VERBOSITY = configuration()["subrepo_verbosity"]
-CONTAINER_ROOT_PATH = configuration()["container_git_root"]
-GITHUB_USERNAME = configuration()["github_username"]
-GIT_VERBOSITY = configuration()["git_verbosity"]
+FEATUFEATURE_ROOT_PATH = None
+FEATURE_REMOTE_UR = None
+FEATURE_ACCESS_TOKEN = None
+FEATURE_TMP_CHECKOUT_LOCATION = None
+FEATURE_TMP_DIRNAME = None
+SUBREPO_VERBOSITY = None
+CONTAINER_ROOT_PATH = None
+GITHUB_USERNAME = None
+GIT_VERBOSITY = None
+
+
+def initialize_git_constants():
+    global FEATURE_ROOT_PATH
+    global FEATURE_REMOTE_URL
+    global FEATURE_ACCESS_TOKEN
+    global FEATURE_TMP_CHECKOUT_LOCATION
+    global FEATURE_TMP_DIRNAME
+    global SUBREPO_VERBOSITY
+    global CONTAINER_ROOT_PATH
+    global GITHUB_USERNAME
+    global GIT_VERBOSITY
+    FEATURE_ROOT_PATH = configuration()["feature_git_root"]
+    FEATURE_REMOTE_URL = configuration()["feature_git_remote"]
+    FEATURE_ACCESS_TOKEN = configuration()["feature_github_access_token"]
+    FEATURE_TMP_CHECKOUT_LOCATION = configuration()["feature_git_temp_root"]
+    FEATURE_TMP_DIRNAME = constants()["subrepo_temporary_directoryname"]
+    SUBREPO_VERBOSITY = configuration()["subrepo_verbosity"]
+    CONTAINER_ROOT_PATH = configuration()["container_git_root"]
+    GITHUB_USERNAME = configuration()["github_username"]
+    GIT_VERBOSITY = configuration()["git_verbosity"]
+
 
 ###
 #
