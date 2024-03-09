@@ -3,9 +3,7 @@ Python utility facilitating patching a dangling feature onto evolving codebases.
 
 This utility is targeted at researchers working with open source projects they may not have direct influence on. 
 
-It aims to automate the process of upgrading to a new version of the codebase as much as possible, such that the focus of the developers can be concentrated on the final state of the codebase, instead of intermediate steps that would come up in traditional rebasing which may ultimately not be of importance. 
-
-(TODO: Do we need a more extensive intro?)
+It aims to automate the process of upgrading to a new version of the upstream codebase and eliminating the need to traverse any intermediate steps encountered in traditional rebasing. The code is instead patched onto the, relevant revision of the upstream codebase.
 
 This project uses the [git-subrepo](https://github.com/ingydotnet/git-subrepo) library to manage nested repositories, please refer to their installation instructions to install this requirement. The scripts of feature-patch expect to be run in a **bash** shell with an accessible [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), and git-subrepo installation in it's path.
 
@@ -17,7 +15,7 @@ The project was tested with the following shells:
 
 We ultimately strive for a modular implementation which lends itself to be extended to various codebases and welcome contributions. 
 
-The first use-case was an Android project and there is thus currently a bias towards preexisting structures (e.g., folder hierarchies) found in these environments.
+The first use-case was an Android project and there is thus currently a bias towards preexisting structures (e.g., folder hierarchies) found in this environment.
 
 # Table of Contents <!-- omit from toc -->
 - [feature-patch](#feature-patch)
@@ -109,13 +107,31 @@ pip install -r requirements.txt
 
 ## Configuration
 
-The utility can be configured with the cli with the following command:
+
+The `config_template.yml` file in the `conf` folder show all the system specific configuration parameters.
+Copy the template into a file called `config.yml` and fill in all the fields. The comments document their purpose. If `config.yml` is placed in the `conf` folder, git will ignore the file (configured in .gitignore), avoiding your credentials to be pushed to github :)
+
+The utility can also be configured with the CLI:
 
 ```
-TODO
+python fp.py configure --<flag> <value>
 ```
 
-*Ideally the template file would be read to extract the helptext for each *
+The script will try to find the configuration template file at: `./conf/config_template.yml`. If this fails, it attempts to find the absolute path of `config_template.yml` in the environment variable `FP_CONFIGURATION_TEMPLATE_PATH`.
+
+```
+python fp.py configure --help
+```
+
+Will list all the configurable flags and the documenting comments.
+
+If a flag is added during development, calling:
+
+```
+python fp.py update_config_template
+```
+
+Will add it to the template preserving the documenting comment above the field and with `TODO` as a value. Please keep the template up to date.
 
 ## Testing
 
