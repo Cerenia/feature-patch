@@ -154,6 +154,7 @@ def main():
     configparser.add_argument('--config_filepath', help="Relative or absolute path to the configuration file. "
                                                         "Default: './conf/config.yml'", default="./conf/config.yml")
     configparser.set_defaults(func=configure)
+    enrich_with_config_options()
 
     extraction = subparsers.add_parser('extract', help="Extracts current interface and pushes it to a new branch of "
                                                        "the subrepository named after the provided tag.")
