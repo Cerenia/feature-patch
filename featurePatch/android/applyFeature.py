@@ -92,7 +92,7 @@ def _write_error(log_msg: str, filepath: str, logfunction: Callable[[str], None]
         f.write(f"{_format_runtime_task(filepath)},\n")
 
 
-def _initiate_runtime_log():
+def match():
     """
      Walk through all the files in the contact_point folder and attempt to match them.
      Record if you cannot match a file and save the matched pairs + status indicator in the runtime_record.
@@ -258,8 +258,7 @@ def _line_diff(text1: str, text2: str, deadline: float):
     return diffs
 
 
-def run():
-    _initiate_runtime_log()
+def patch():
     # assume the entire record can be kept in memory
     with open(runtime_record_path(), "r") as f:
         records = json.load(f)

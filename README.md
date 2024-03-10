@@ -23,10 +23,10 @@ The first use-case was an Android project and there is thus currently a bias tow
     - [Prerequisites](#prerequisites)
     - [Extraction](#extraction)
     - [Migration](#migration)
-    - [Patching](#patching)
-      - [Match](#match)
-      - [Apply](#apply)
-    - [Merge](#merge)
+    - [Application](#application)
+      - [Matching](#matching)
+      - [Patching](#patching)
+    - [Merging](#merging)
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Testing](#testing)
@@ -81,17 +81,17 @@ Check and fix these files manually before continuing to the migration and applic
 
 After pushing the interface to the new branch, the `main` branch of the `container` is upgraded to the desired tag and a new branch for the reapplication and continuous development of this version is created. There, the feature `migration-branch`, which now includes the contact points are reinserted into the new `container` branch.
 
-### Patching
+### Application
 
-#### Match
+#### Matching
 
 From there feature-patch will first attempt to match any contact point file in the `feature` with a corresponding file in the updated `container` repository. Any found match or contact point files that were marked as *new* (see [Prerequisites](#prerequisites)) will be recorded in the runtime log. Any files left in the contact points will be recorded in the error log in a human friendly [json](https://docs.python.org/3/library/json.html) format. You may manually edit these files or fix errors and rerun this step before moving on to the application.
 
-#### Apply
+#### Patching
 
 After the creation of the runtime log the utility will attempt to diff and merge any matched files and replace the corresponding files in the `container`. Pure copy files will simply be copied into the corresponding location in the `container`. Finally the contact-points folder of the subrepository is removed to allow the developer to iron out any bugs.
 
-### Merge
+### Merging
 
 Once the application is updated back to a functional point, the merging of the now updated `feature` repository can be run. This will simply merge the current migration branch back into master and check master back out into the `container` repository. Development can now continue 'normally' on the `container` branch that was newly created for this version, without needing to worry about the subrepository until the next migration.
 

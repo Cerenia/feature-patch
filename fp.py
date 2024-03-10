@@ -1,7 +1,8 @@
 import yaml
 
 from featurePatch.android.extractFeature import extract_feature
-from featurePatch.android.applyFeature import run as applyFeature
+from featurePatch.android.applyFeature import match as af_match
+from featurePatch.android.applyFeature import patch as af_patch
 from featurePatch.util import clear_contact_points, add_to_config_template
 from featurePatch.git import *
 from featurePatch.git import checkout_subrepo
@@ -19,6 +20,10 @@ configparser: argparse.ArgumentParser
 
 
 def configure(args):
+    """
+    Change any parameter in config.yml, will ignore any extraneous keys
+    :param args: args.keys() may contain any yaml key defined in config.yml to change
+    """
     with open(args.config_filepath, "r") as f:
         lines = f.readlines()
     argdict = vars(args)
@@ -89,33 +94,60 @@ def extract_config_fields(configuration_template_path):
 #####
 
 
-def extract(tag):
+def extract(args):
+    """
+    Creates an extraction branch named after 'tag' and checks it out. Then walks through all the relevant files in the
+    android project and extracts the contact points of the container into the subrepository.
+    :param args.tag: The version tag that is finally to be migrated to (this will determine the name of the extraction branch)
+    """
     print(f"#####\n##Extracting contact points\n#####\n")
     initialize_git_constants()
-    create_subrepo_migration_branch(tag)
-    checkout_subrepo_migration_branch(tag)
+    create_subrepo_migration_branch(args.tag)
+    checkout_subrepo_migration_branch(args.tag)
     extract_feature()
 
 
 def migrate(args):
+    """
+    Pushes the extracted contact points. Then updates the container to the specified tags and reinserts the contact
+    points branch of the subrepository.
+    :param args.tag: Which tag to upgrade the container to
+    """
     initialize_git_constants()
-    # TODO
-    pass
-
-
-def patch(args):
-    initialize_git_constants()
-    print(f"#####\n##Applying to tag {args.tag}\n#####\n")
+    print(f"#####\n##Migrating to tag {args.tag}\n#####\n")
     push_subrepo("Extracted contact points")
     upgrade_container_to(args.tag)
     checkout_subrepo_migration_branch(args.tag)
-    applyFeature()
+
+
+def match(args):
+    """
+    Walk through the contact points and match the corresponding container files. Log any errors.
+    """
+    print("#####\n##Matching contact points...\n#####\n")
+    af_match()
+
+
+def patch(args):
+    """
+    Walk through the runtime log and attempt to patch all the container files with the contact point files.
+    Log any errors. Finally remove the contact points from the subrepository folder to allow for manual cleanup.
+    """
+    print("#####\n##Patching container contact points...\n#####\n")
+    af_patch()
+    print("#####\n##Clearing feature contact points...\n#####\n")
     clear_contact_points()
 
 
 def merge(args):
+    """
+    Merges changes done to the migration branch of the feature back into master and checks out master for continued
+    development.
+    :param args.tag: Migration version tag.
+    """
+    print("#####\n##Checking out and merging into feature main branch...\n#####\n")
     initialize_git_constants()
-    print("#####\n##Merging changes in subrepository to master branch\n#####\n")
+    print("#####\n##Merging changes in feature to master branch\n#####\n")
     push_subrepo(f"Upgrade to {args.tag} functional.")
     checkout_subrepo("master")
     merge_migration_branch(f"{args.tag}")
@@ -157,13 +189,19 @@ def main():
     enrich_with_config_options()
 
     extraction = subparsers.add_parser('extract', help="Extracts current interface and pushes it to a new branch of "
-                                                       "the subrepository named after the provided tag.")
+                                                       "the subrepository named after the provided tag."
+                                                       "Then updated the container to the specified tag and reinserts"
+                                                       "the subrepository branch containing the contact points.")
     extraction.add_argument('tag', help='Tag to which to migrate the container')
     extraction.set_defaults(func=extract)
 
-    patching = subparsers.add_parser('patch', help="Updates the container to the specified tag and attempts to apply "
-                                                   "the interface back onto the updated code.")
-    patching.add_argument('tag', help='Tag to which to migrate the container')
+    matching = subparsers.add_parser('match', help="Matches up all files and creates a runtime and error log "
+                                                   "documenting successes and failures.")
+    matching.set_defaults(func=match)
+
+    patching = subparsers.add_parser('patch', help="Copies and patches files wherever possible, updating runtime and "
+                                                   "error logs and finally removes the contact points from the "
+                                                   "subrepository to allow for manual cleanup.")
     patching.set_defaults(func=patch)
 
     migration = subparsers.add_parser('migrate', help="")
@@ -174,11 +212,6 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-    """
-    # TODO: Still needed?
-    match_parser = subparsers.add_parser('match', help="")
-    match_parser.set_defaults(func=match)
-    """
 
     # CLI TODO:
     # Deduce configs (some automation for the obvious things)
