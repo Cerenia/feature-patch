@@ -410,3 +410,8 @@ def initialize_subrepo():
     """
     _navigate_to(FEATURE_ROOT_PATH)
     execute(git["subrepo", SUBREPO_VERBOSITY, "init"])
+
+
+# Still TODO: Expand this to handle forks (especially important for people to be able to test the module),
+# Unfortunately, git-subrepo does not handle this natively
+# see: https://github.com/ingydotnet/git-subrepo/issues/240

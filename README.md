@@ -29,8 +29,12 @@ The first use-case was an Android project and there is thus currently a bias tow
     - [Merging](#merging)
   - [Installation](#installation)
   - [Configuration](#configuration)
-  - [Testing](#testing)
+  - [Tutorial \& Testing](#tutorial--testing)
+    - [1. Fork the container](#1-fork-the-container)
+    - [2. Checkout the `modified` branch](#2-checkout-the-modified-branch)
+    - [3. Create and configure `config.yml`](#3-create-and-configure-configyml)
   - [Prerequisites](#prerequisites-1)
+    - [Still TODO:](#still-todo)
 
 
 ## Terminology and Design Principles
@@ -133,17 +137,40 @@ python fp.py update_config_template
 
 Will add it to the template preserving the documenting comment above the field and with `TODO` as a value. Please keep the template up to date.
 
-## Testing
+## Tutorial & Testing
 
 We host two example repositories to test the flow of the utility. 
-The container is a simple medication reminder app with an embedded feature.
+The container is a simple medication reminder app with an embedded separate feature.
 
-1. Clone the [container](https://github.com/Cerenia/Simpill)
+### 1. Fork the [container](https://github.com/Cerenia/Simpill)
+
+**Make sure to include all the branches in your fork and not just `main`.** 
+
+Then clone the fork to your machine:
+
+```
+git clone <fork_url>
+```
 
 The repository has two branches, `main` and `modified`, and two tags marking commits on the `main` branch. 
+You can check this by navigating into the `Simpill` directory and running:
+```
+git branch -a
+```
+Note that only the main branch was replicated locally, and both branches exist in the remote.
 The `modified` branch is based on tag `v1.1.0` and includes the embedded [feature](https://github.com/Cerenia/Simpill-subrepo). The `main` container branch has some simple additions to the code and is tagged with `v1.1.1`.
 
-2. Checkout the `modified` branch
+You can list the tags with:
+```
+git tag
+```
+
+
+### 2. Checkout the `modified` branch
+
+```
+git checkout -b modified origin/modified
+```
 
 Navigate to the source folder of the container:
 `<container_root>\app\src\main\java\com\example\simpill`
@@ -163,11 +190,25 @@ You can observe this in the following files:
 
 Both `MainActivity.java` and `app_main.xml` were adapted from the container and have inserts that are framed by two markers and the words `start` and `end`.
 
-`log_view.xml` is a file that was added to the container. This is marked by the same brackets without content inbetween.
+`log_view.xml` is a file that was added to the container. This is marked by the same brackets without any code inbetween.
+
+### 3. Create and configure `config.yml`
+
+Simply copy and rename the template file in the `conf` folder of your copy of the `feature-patch` repository, and fill in the configuration according to the comments for each field. You can also use the CLI directly.
+
+For example to update the marker:
+
+```
+python fp.py configure --marker "IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn"
+```
 
 ## Prerequisites
 
 - Mark any code you insert with the marker
 - Whole files to be inserted should have a marker pair as the first comment of the file
 - The smaller you can keep the interface the better
+
+### Still TODO:
+
+- Figure out clean way to fork subrepository if non-collaborators want to test
 

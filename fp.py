@@ -212,17 +212,15 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-    # CLI TODO:
-    # Deduce configs (some automation for the obvious things)
+    # CLI still TODO:
+    # Deduce configs (some automation for the obvious things, e.g., deducable Android paths)
     # Set constant
     # Expose logging change to CLI
-    # (Update config template?)
 
     args = parser.parse_args()
 
-    if "--help" not in args.keys() or "-h" not in args.keys():
-        init_log()
-        args.func(args)
+    init_log()
+    args.func(args)
 
 
 if __name__ == '__main__':
