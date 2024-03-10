@@ -135,7 +135,35 @@ Will add it to the template preserving the documenting comment above the field a
 
 ## Testing
 
-- Document Simpill and Simpill-subrepo
+We host two example repositories to test the flow of the utility. 
+The container is a simple medication reminder app with an embedded feature.
+
+1. Clone the [container](https://github.com/Cerenia/Simpill)
+
+The repository has two branches, `main` and `modified`, and two tags marking commits on the `main` branch. 
+The `modified` branch is based on tag `v1.1.0` and includes the embedded [feature](https://github.com/Cerenia/Simpill-subrepo). The `main` container branch has some simple additions to the code and is tagged with `v1.1.1`.
+
+2. Checkout the `modified` branch
+
+Navigate to the source folder of the container:
+`<container_root>\app\src\main\java\com\example\simpill`
+
+The feature code is in the `ext` folder, indicated by the `.gitrepo` file, which also records which branch of the subrepository is currently checked out. This should currently be `master`.
+
+Any interface code of the feature in the container is delimited by the marker:
+
+`IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn`
+
+You can observe this in the following files:
+```
+<container_root>\app\src\main\java\com\example\simpill\ MainActivity.java
+<container_root>\app\src\res\layout\app_main.xml
+<container_root>\app\src\res\layout\log_view.xml
+```
+
+Both `MainActivity.java` and `app_main.xml` were adapted from the container and have inserts that are framed by two markers and the words `start` and `end`.
+
+`log_view.xml` is a file that was added to the container. This is marked by the same brackets without content inbetween.
 
 ## Prerequisites
 

@@ -9,7 +9,7 @@ from featurePatch.android.applyFeature import _compute_line_diff, _transform_dif
 from .util import configuration
 
 
-def print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
+def _print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
     print(title)
     print("_____________________")
     print(len(d))
@@ -99,22 +99,22 @@ result = "I\n" \
                 "you.\n"
 
 
-def print_all_diffs(diffs):
+def _print_all_diffs(diffs):
     title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
     for d in diffs:
         print(f"{title_map[d[0]]}:")
         print(d[1])
 
 
-def test_patch():
+def _test_patch():
     print("Up - C")
     print("_____________________")
     up_c = _compute_line_diff(update, contact_point)
-    print_all_diffs(up_c)
+    _print_all_diffs(up_c)
     print("Un - Up")
     print("_____________________")
     un_up = _compute_line_diff(unmodified, update)
-    print_all_diffs(un_up)
+    _print_all_diffs(un_up)
     #print("Up - Un")
     up_un = _compute_line_diff(update, unmodified)
     #print_all_diffs(up_un)
@@ -123,5 +123,4 @@ def test_patch():
     diffs = _transform_diffs(un_up, up_c)
     print("Transformed")
     print("_____________________")
-    print_all_diffs(diffs)
-    pass
+    _print_all_diffs(diffs)

@@ -212,7 +212,6 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-
     # CLI TODO:
     # Deduce configs (some automation for the obvious things)
     # Set constant
