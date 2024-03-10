@@ -204,7 +204,8 @@ python fp.py configure --marker "IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn"
 
 ### 4. Go through the testing workflow
 
-a) `python fp.py `
+a) `python fp.py extract v1.1.1`
+
 
 
 ### Still TODO:

@@ -3,10 +3,9 @@ import yaml
 from featurePatch.android.extractFeature import extract_feature
 from featurePatch.android.applyFeature import match as af_match
 from featurePatch.android.applyFeature import patch as af_patch
+from featurePatch.log import *
 from featurePatch.util import clear_contact_points, add_to_config_template
 from featurePatch.git import *
-from featurePatch.git import checkout_subrepo
-from featurePatch.log import *
 import argparse
 import re
 
@@ -219,7 +218,6 @@ def main():
 
     args = parser.parse_args()
 
-    init_log()
     args.func(args)
 
 

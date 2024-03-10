@@ -9,23 +9,16 @@ from <path to log>.log import log
 import logging
 from typing import Optional
 
-log: Optional[logging.Logger] = None
-
-
-def init_log():
-    global log
-    # Initialize console logger, Info by default
-    if log is None:
-        streamHandler = logging.StreamHandler()
-        # Apply formatting
-        source_descriptor = "%(levelname)s:%(filename)s|%(funcName)s:"
-        message = "%(message)s\n"
-        streamHandler.setFormatter(logging.Formatter(source_descriptor + "\n" + message))
-        log = logging.getLogger("feature-patch")
-        streamHandler.setLevel(logging.DEBUG)
-        log.addHandler(streamHandler)
-        log.setLevel(logging.INFO)
-        log.info("Logger initialized!")
+streamHandler = logging.StreamHandler()
+# Apply formatting
+source_descriptor = "%(levelname)s:%(filename)s|%(funcName)s:"
+message = "%(message)s\n"
+streamHandler.setFormatter(logging.Formatter(source_descriptor + "\n" + message))
+log = logging.getLogger("feature-patch")
+streamHandler.setLevel(logging.DEBUG)
+log.addHandler(streamHandler)
+log.setLevel(logging.INFO)
+log.info("Logger initialized!")
 
 
 def initialize_file_handler(log_file_path):
