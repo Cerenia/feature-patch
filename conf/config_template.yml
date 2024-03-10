@@ -24,6 +24,8 @@ feature_github_access_token: TODO
 marker: TODO
 # The path to *this*/.. directory. CLI expects this as the working dir.
 python_root: TODO
+# Where to create the runtime and error logs
+working_dir: TODO
 # Flag to pass to git subrepo, reflected in logging
 subrepo_verbosity: -dv
 # Flag for Git

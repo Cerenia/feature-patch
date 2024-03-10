@@ -33,7 +33,7 @@ The first use-case was an Android project and there is thus currently a bias tow
     - [1. Fork the container](#1-fork-the-container)
     - [2. Checkout the `modified` branch](#2-checkout-the-modified-branch)
     - [3. Create and configure `config.yml`](#3-create-and-configure-configyml)
-  - [Prerequisites](#prerequisites-1)
+    - [4. Go through the testing workflow](#4-go-through-the-testing-workflow)
     - [Still TODO:](#still-todo)
 
 
@@ -202,13 +202,12 @@ For example to update the marker:
 python fp.py configure --marker "IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn"
 ```
 
-## Prerequisites
+### 4. Go through the testing workflow
 
-- Mark any code you insert with the marker
-- Whole files to be inserted should have a marker pair as the first comment of the file
-- The smaller you can keep the interface the better
+a) `python fp.py `
+
 
 ### Still TODO:
 
-- Figure out clean way to fork subrepository if non-collaborators want to test
+- Figure out clean way to fork subrepository to allow non-collaborators to run the tests
 
