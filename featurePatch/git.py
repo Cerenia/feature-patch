@@ -309,7 +309,7 @@ def _create_remote_subrepo_branch(branchname: str):
     if _isdir(FEATURE_TMP_DIRNAME):
         execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
     execute(local["mkdir"][FEATURE_TMP_DIRNAME])
-    _navigate_to(FEATURE_TMP_DIRNAME)
+    _navigate_to(os.path.join('.',FEATURE_TMP_DIRNAME))
     # Create url containing username and pw for cloning
     execute(git["clone", GIT_VERBOSITY, _authenticated_subrepo_url()])
     output = execute(local["ls"])

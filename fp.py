@@ -204,6 +204,7 @@ def main():
     patching.set_defaults(func=patch)
 
     migration = subparsers.add_parser('migrate', help="")
+    migration.add_argument('tag', help='Tag to which to migrate the container')
     migration.set_defaults(func=migrate)
 
     merging = subparsers.add_parser('merge', help="Merges any changes that occured to adapt to the update back into "

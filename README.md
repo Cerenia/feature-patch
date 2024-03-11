@@ -206,7 +206,11 @@ python fp.py configure --marker "IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn"
 
 a) `python fp.py extract v1.1.1`
 
+=> contact points extracted and new branch created
 
+b) `python fp.py migrate v1.1.1`
+
+=> container updated and contact points pushed to new subrepo branch
 
 ### Still TODO:
 
