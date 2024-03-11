@@ -99,7 +99,7 @@ def extract(args):
     android project and extracts the contact points of the container into the subrepository.
     :param args.tag: The version tag that is finally to be migrated to (this will determine the name of the extraction branch)
     """
-    print(f"#####\n##Extracting contact points\n#####\n")
+    print(f"#####\n##  Extracting contact points\n#####\n")
     initialize_git_constants()
     create_subrepo_migration_branch(args.tag)
     checkout_subrepo_migration_branch(args.tag)
@@ -113,7 +113,7 @@ def migrate(args):
     :param args.tag: Which tag to upgrade the container to
     """
     initialize_git_constants()
-    print(f"#####\n##Migrating to tag {args.tag}\n#####\n")
+    print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
     push_subrepo("Extracted contact points")
     upgrade_container_to(args.tag)
     checkout_subrepo_migration_branch(args.tag)
@@ -123,7 +123,7 @@ def match(args):
     """
     Walk through the contact points and match the corresponding container files. Log any errors.
     """
-    print("#####\n##Matching contact points...\n#####\n")
+    print("#####\n##  Matching contact points...\n#####\n")
     af_match()
 
 
@@ -132,9 +132,10 @@ def patch(args):
     Walk through the runtime log and attempt to patch all the container files with the contact point files.
     Log any errors. Finally remove the contact points from the subrepository folder to allow for manual cleanup.
     """
-    print("#####\n##Patching container contact points...\n#####\n")
+    initialize_git_constants()
+    print("#####\n##  Patching container contact points...\n#####\n")
     af_patch()
-    print("#####\n##Clearing feature contact points...\n#####\n")
+    print("#####\n##  Clearing feature contact points...\n#####\n")
     clear_contact_points()
 
 
@@ -144,9 +145,9 @@ def merge(args):
     development.
     :param args.tag: Migration version tag.
     """
-    print("#####\n##Checking out and merging into feature main branch...\n#####\n")
+    print("#####\n##  Checking out and merging into feature main branch...\n#####\n")
     initialize_git_constants()
-    print("#####\n##Merging changes in feature to master branch\n#####\n")
+    print("#####\n##  Merging changes in feature to master branch\n#####\n")
     push_subrepo(f"Upgrade to {args.tag} functional.")
     checkout_subrepo("master")
     merge_migration_branch(f"{args.tag}")
@@ -154,21 +155,12 @@ def merge(args):
 
 
 def main():
-    # Revert
+    # Revert TODO: group in test method
     # clean_subrepo()
     # _checkout_subrepo("master")
+    # initialize_git_constants()
     # delete_local_migration_branch("v1.1.1")
 
-    # CLI Flow example
-    """
-    python fp.py extract v1.1.1
-    -> Check error log for any issues that need to be resolved by hand
-    python fp.py patch v1.1.1
-    -> Check error log for any issues that need to be resolved by hand
-    -> Fix any remaining issues by hand until app runs again
-    python fp.py merge v1.1.1
-    -> Continue coding on the new branch
-    """
     global configparser
 
     parser = argparse.ArgumentParser()
@@ -215,7 +207,7 @@ def main():
     # CLI still TODO:
     # Deduce configs (some automation for the obvious things, e.g., deducable Android paths)
     # Set constant
-    # Expose logging change to CLI
+    # Expose logging change to CLI (and fix debug showing throughout INFO?)
 
     args = parser.parse_args()
 

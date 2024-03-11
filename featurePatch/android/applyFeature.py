@@ -251,7 +251,7 @@ def _line_diff(text1: str, text2: str, deadline: float):
 
     # Convert the diff back to original text.
     dmp.diff_charsToLines(diffs, linearray)
-    log.debug("line_diffs:\n" + print_all_diffs(diffs))
+    #log.debug("line_diffs:\n" + print_all_diffs(diffs))
     # Eliminate freak matches (e.g. blank lines)
     # dmp.diff_cleanupSemantic(diffs)
     # => This was resulting in diffs that were finer than line by line, so we consciously omit it.
