@@ -34,7 +34,6 @@ The first use-case was an Android project and there is thus currently a bias tow
     - [2. Checkout the `modified` branch](#2-checkout-the-modified-branch)
     - [3. Create and configure `config.yml`](#3-create-and-configure-configyml)
     - [4. Go through the testing workflow](#4-go-through-the-testing-workflow)
-    - [Still TODO:](#still-todo)
 
 
 ## Terminology and Design Principles
@@ -226,7 +225,8 @@ e) `python fp.py merge`
 
 => Merges any changes in subrepository back to master and checks out master.
 
-### Still TODO:
+
+### Still TODO: <!-- omit from toc -->
 
 - Figure out clean way to fork subrepository to allow non-collaborators to run the tests
 
