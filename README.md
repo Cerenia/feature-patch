@@ -236,9 +236,3 @@ d) `python fp.py patch`
 e) `python fp.py merge`
 
 => Merges any changes in subrepository back to master and checks out master.
-
-
-### Still TODO: <!-- omit from toc -->
-
-- Figure out clean way to fork subrepository to allow non-collaborators to run the tests
-
