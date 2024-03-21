@@ -285,7 +285,7 @@ def push_subrepo(message: str):
     _navigate_to(cwd)
 
 
-def create_subrepo_migration_branch(suffix: str=None):
+def create_feature_migration_branch(suffix: str=None):
     """
     We want to keep the main branch of the subrepo clean so we add the extraction commits to a fresh branch.
     @see: https://github.com/ingydotnet/git-subrepo/blob/110b9eb13f259986fffcf11e8fb187b8cce50921/lib/git-subrepo#L731
@@ -381,15 +381,15 @@ def upgrade_container_to(tag: str, main_branch_name="main"):
     execute(git["checkout", tag])
 
 
-def checkout_subrepo_migration_branch(tag: str):
+def checkout_feature_migration_branch(tag: str):
     """
     Checks out the migration branch for the specified tag.
     :param tag: The tag for which to checkout the migration branch.
     """
-    checkout_subrepo(_migration_branch_name(tag))
+    checkout_feature(_migration_branch_name(tag))
 
 
-def checkout_subrepo(subrepo_branch: str):
+def checkout_feature(subrepo_branch: str):
     """
     Clones a different branch of the subrepo.
     :param subrepo_branch: which branch to switch to
@@ -410,8 +410,3 @@ def initialize_subrepo():
     """
     _navigate_to(FEATURE_ROOT_PATH)
     execute(git["subrepo", SUBREPO_VERBOSITY, "init"])
-
-
-# Still TODO: Expand this to handle forks (especially important for people to be able to test the module),
-# Unfortunately, git-subrepo does not handle this natively
-# see: https://github.com/ingydotnet/git-subrepo/issues/240

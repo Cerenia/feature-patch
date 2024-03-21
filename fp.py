@@ -88,6 +88,16 @@ def extract_config_fields(configuration_template_path):
 
 #####
 #
+# Testing
+#
+####
+
+def relink(args):
+    checkout_feature(args.branch)
+
+
+#####
+#
 # Operations
 #
 #####
@@ -101,8 +111,8 @@ def extract(args):
     """
     print(f"#####\n##  Extracting contact points\n#####\n")
     initialize_git_constants()
-    create_subrepo_migration_branch(args.tag)
-    checkout_subrepo_migration_branch(args.tag)
+    create_feature_migration_branch(args.tag)
+    checkout_feature_migration_branch(args.tag)
     extract_feature()
 
 
@@ -116,7 +126,7 @@ def migrate(args):
     print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
     push_subrepo("Extracted contact points")
     upgrade_container_to(args.tag)
-    checkout_subrepo_migration_branch(args.tag)
+    checkout_feature_migration_branch(args.tag)
 
 
 def match(args):
@@ -149,7 +159,7 @@ def merge(args):
     initialize_git_constants()
     print("#####\n##  Merging changes in feature to master branch\n#####\n")
     push_subrepo(f"Upgrade to {args.tag} functional.")
-    checkout_subrepo("master")
+    checkout_feature("master")
     merge_migration_branch(f"{args.tag}")
     push_subrepo(f"Merged {args.tag} back into master.")
 
@@ -195,7 +205,8 @@ def main():
                                                    "subrepository to allow for manual cleanup.")
     patching.set_defaults(func=patch)
 
-    migration = subparsers.add_parser('migrate', help="")
+    migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
+                                                      "container to the specified tag")
     migration.add_argument('tag', help='Tag to which to migrate the container')
     migration.set_defaults(func=migrate)
 
@@ -203,6 +214,11 @@ def main():
                                                   "the master branch of the subrepository.")
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
+
+    relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of"
+                                                          "the feature repository configured in config.yml")
+    relink_feature.add_argument('branch', help='Which branch to check out', default='master')
+    relink_feature.set_defaults(func=relink)
 
     # CLI still TODO:
     # Deduce configs (some automation for the obvious things, e.g., deducable Android paths)

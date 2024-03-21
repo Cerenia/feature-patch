@@ -30,10 +30,11 @@ The first use-case was an Android project and there is thus currently a bias tow
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Tutorial \& Testing](#tutorial--testing)
-    - [1. Fork the container](#1-fork-the-container)
-    - [2. Checkout the `modified` branch](#2-checkout-the-modified-branch)
+    - [1. Fork the container and the feature](#1-fork-the-container-and-the-feature)
+    - [2. Checkout the `modified` branch of the container](#2-checkout-the-modified-branch-of-the-container)
     - [3. Create and configure `config.yml`](#3-create-and-configure-configyml)
-    - [4. Go through the testing workflow](#4-go-through-the-testing-workflow)
+    - [4. Link the forked feature and container](#4-link-the-forked-feature-and-container)
+    - [5. Go through the testing workflow](#5-go-through-the-testing-workflow)
 
 
 ## Terminology and Design Principles
@@ -143,7 +144,9 @@ Will add it to the template preserving the documenting comment above the field a
 We host two example repositories to test the flow of the utility. 
 The container is a simple medication reminder app with an embedded separate feature.
 
-### 1. Fork the [container](https://github.com/Cerenia/Simpill)
+To make the tests repeatable, both the container and the feature will have to be forked. The originals are write protected, but feel free to introduce new test cases by opening a PR against the upstreams.
+
+### 1. Fork the [container](https://github.com/Cerenia/Simpill) and the [feature](https://github.com/Cerenia/Simpill-subrepo)
 
 **Make sure to include all the branches in your fork and not just `main`.** 
 
@@ -153,7 +156,7 @@ Then clone the fork to your machine:
 git clone <fork_url>
 ```
 
-The repository has two branches, `main` and `modified`, and two tags marking commits on the `main` branch. 
+The container repository has two branches, `main` and `modified`, and two tags marking commits on the `main` branch. 
 You can check this by navigating into the `Simpill` directory and running:
 ```
 git branch -a
@@ -166,8 +169,9 @@ You can list the tags with:
 git tag
 ```
 
+The feature repository only has a single `master` branch.
 
-### 2. Checkout the `modified` branch
+### 2. Checkout the `modified` branch of the container
 
 ```
 git checkout -b modified origin/modified
@@ -176,7 +180,7 @@ git checkout -b modified origin/modified
 Navigate to the source folder of the container:
 `<container_root>\app\src\main\java\com\example\simpill`
 
-The feature code is in the `ext` folder, indicated by the `.gitrepo` file, which also records which branch of the subrepository is currently checked out. This should currently be `master`.
+The feature code is in the `ext` folder, indicated by the `.gitrepo` file, which also records which branch of the subrepository is currently checked out. This should currently be `master`. *Note that this still points to the original feature subrepository and not the fork, we will fix the linkage in the next section*. 
 
 Any interface code of the feature in the container is delimited by the marker:
 
@@ -203,7 +207,15 @@ For example to update the marker:
 python fp.py configure --marker "IXwDmcyAEZEUvkES0IXy144JB SimPillAddOn"
 ```
 
-### 4. Go through the testing workflow
+Make sure to point both the container and feature remotes to your forks and not the original repositories.
+
+### 4. Link the forked feature and container
+
+The following command will remove the original feature from your fork and check out the forked feature instead (provided the configuration is set up propperly).
+
+`python fp.py relink`
+
+### 5. Go through the testing workflow
 
 a) `python fp.py extract v1.1.1`
 
