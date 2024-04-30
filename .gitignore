@@ -1,8 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,android,androidstudio
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,android,androidstudio
 
-### ignore local yaml file
+### ignore local yaml files
 conf/config.yml
+conf/config_test.yml
 
 ### Android ###
 # Gradle files
