@@ -10,7 +10,7 @@ android_drawable_root: TODO
 android_string_root: TODO
 # The top level directory of the container application project
 container_git_root: TODO
-# The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_layout_root>)
+# The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_src_root>)
 feature_git_root: TODO
 # A directory in which the feature repository will be checked out for automated git operations. Should have write access.
 feature_git_temp_root: TODO
@@ -29,7 +29,7 @@ working_dir: TODO
 # Flag to pass to git subrepo, reflected in logging
 subrepo_verbosity: -dv
 # Flag for Git
-git_verbosity: -dv
+git_verbosity: -v
 # indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
 windows: False
 # Where to insert matching context. -1 => before the insert, 1 => after the insert

@@ -313,6 +313,8 @@ def _create_remote_subrepo_branch(branchname: str):
     # Create url containing username and pw for cloning
     execute(git["clone", GIT_VERBOSITY, _authenticated_subrepo_url()])
     output = execute(local["ls"])
+    print(f"Erroneous filepath: {output}")
+    print(f"Erroneous filepath: {output.strip()}")
     _navigate_to(output.strip())
     execute(git["checkout", "-b", branchname])
     execute(git["push", GIT_VERBOSITY, "--repo", _authenticated_subrepo_url(), "--set-upstream", "origin", branchname])

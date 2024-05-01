@@ -10,7 +10,7 @@ This project uses the [git-subrepo](https://github.com/ingydotnet/git-subrepo) l
 The project was tested with the following shells:
 - Windows:
   - Git-Bash
-  - WLS Ubuntu 22.04.3 LTS (TODO)
+  - WLS Ubuntu 22.04.3 LTS 
 - Linux (TODO)
 
 We ultimately strive for a modular implementation which lends itself to be extended to various codebases and welcome contributions. 

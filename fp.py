@@ -191,7 +191,7 @@ def main():
 
     extraction = subparsers.add_parser('extract', help="Extracts current interface and pushes it to a new branch of "
                                                        "the subrepository named after the provided tag."
-                                                       "Then updated the container to the specified tag and reinserts"
+                                                       "Then updated the container to the specified tag and reinserts "
                                                        "the subrepository branch containing the contact points.")
     extraction.add_argument('tag', help='Tag to which to migrate the container')
     extraction.set_defaults(func=extract)

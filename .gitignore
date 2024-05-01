@@ -4,6 +4,7 @@
 ### ignore local yaml files
 conf/config.yml
 conf/config_test.yml
+conf/const_test.yml
 
 ### Android ###
 # Gradle files
