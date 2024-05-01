@@ -134,6 +134,7 @@ def match(args):
     Walk through the contact points and match the corresponding container files. Log any errors.
     """
     print("#####\n##  Matching contact points...\n#####\n")
+    checkout_container(args.branch)
     af_match()
 
 
@@ -198,6 +199,7 @@ def main():
 
     matching = subparsers.add_parser('match', help="Matches up all files and creates a runtime and error log "
                                                    "documenting successes and failures.")
+    matching.add_argument('branch', help='From which branch to extract the contact point.')
     matching.set_defaults(func=match)
 
     patching = subparsers.add_parser('patch', help="Copies and patches files wherever possible, updating runtime and "

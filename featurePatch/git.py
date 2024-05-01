@@ -313,8 +313,6 @@ def _create_remote_subrepo_branch(branchname: str):
     # Create url containing username and pw for cloning
     execute(git["clone", GIT_VERBOSITY, _authenticated_subrepo_url()])
     output = execute(local["ls"])
-    print(f"Erroneous filepath: {output}")
-    print(f"Erroneous filepath: {output.strip()}")
     _navigate_to(output.strip())
     execute(git["checkout", "-b", branchname])
     execute(git["push", GIT_VERBOSITY, "--repo", _authenticated_subrepo_url(), "--set-upstream", "origin", branchname])
@@ -404,6 +402,11 @@ def checkout_feature(subrepo_branch: str):
     execute(local["mkdir"][_subrepo_name()])
     _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.")
     execute(git["subrepo", SUBREPO_VERBOSITY, "clone", _authenticated_subrepo_url(), _subrepo_name(), "-b", subrepo_branch, "--force"])
+
+
+def checkout_container(branch):
+    _navigate_to(CONTAINER_ROOT_PATH)
+    execute(git["checkout", GIT_VERBOSITY, branch])
 
 
 def initialize_subrepo():
