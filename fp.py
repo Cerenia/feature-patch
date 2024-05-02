@@ -134,6 +134,7 @@ def match(args):
     Walk through the contact points and match the corresponding container files. Log any errors.
     """
     print("#####\n##  Matching contact points...\n#####\n")
+    initialize_git_constants()
     checkout_container(args.branch)
     af_match()
 
