@@ -95,14 +95,20 @@ def _path_join(first_path: str, second_path: str):
         return first_path[0:-1] + second_path
 
 
+class InvalidPathError(Exception):
+    "Invalid path. Go fix it :)"
+
+
 def _map_path(path: str, to_posix=False):
     """
       Maps paths between POSIX and windows compliance. Will check the 'windows' configuration Bit to determine if a
-      change is needed.
+      change is needed. Throws an exception when '\' and '/' are mixed as part of a pathname.
     :param path: The path to transform.
     :param to_posix: Ignore windows configuration bit and transform windows -> POSIX
     :return: the transformed path
     """
+    if '/' in path and '/' in path:
+        raise InvalidPathError
     if to_posix:
         path = path.replace("\\", "/")
         path = path.replace("C:", "/c")
@@ -406,7 +412,8 @@ def checkout_feature(subrepo_branch: str):
 
 def checkout_container(branch):
     _navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["checkout", GIT_VERBOSITY, branch])
+    # Checkout does not have the -v option
+    execute(git["checkout", branch])
 
 
 def initialize_subrepo():

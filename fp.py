@@ -136,6 +136,7 @@ def match(args):
     print("#####\n##  Matching contact points...\n#####\n")
     initialize_git_constants()
     checkout_container(args.branch)
+    print('after checkout')
     af_match()
 
 
@@ -175,7 +176,7 @@ def main():
 
     global configparser
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Call the functions in the order specified in the README: ')
     subparsers = parser.add_subparsers()
 
     configuration_template_update = subparsers.add_parser('update_config_template',
@@ -192,11 +193,16 @@ def main():
     enrich_with_config_options()
 
     extraction = subparsers.add_parser('extract', help="Extracts current interface and pushes it to a new branch of "
-                                                       "the subrepository named after the provided tag."
+                                                       "the subrepository named after the provided tag. "
                                                        "Then updated the container to the specified tag and reinserts "
                                                        "the subrepository branch containing the contact points.")
     extraction.add_argument('tag', help='Tag to which to migrate the container')
     extraction.set_defaults(func=extract)
+
+    migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
+                                                      "container to the specified tag")
+    migration.add_argument('tag', help='Tag to which to migrate the container')
+    migration.set_defaults(func=migrate)
 
     matching = subparsers.add_parser('match', help="Matches up all files and creates a runtime and error log "
                                                    "documenting successes and failures.")
@@ -207,11 +213,6 @@ def main():
                                                    "error logs and finally removes the contact points from the "
                                                    "subrepository to allow for manual cleanup.")
     patching.set_defaults(func=patch)
-
-    migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
-                                                      "container to the specified tag")
-    migration.add_argument('tag', help='Tag to which to migrate the container')
-    migration.set_defaults(func=migrate)
 
     merging = subparsers.add_parser('merge', help="Merges any changes that occured to adapt to the update back into "
                                                   "the master branch of the subrepository.")
