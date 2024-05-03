@@ -74,11 +74,15 @@ def _duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: 
                         exit(1)
                     if top_level_source_dir != current_dir:
                         # What needs to be created in the code folder if it doesn't exist yet
-                        missing_dirs = path_diff(path_diff(f_path, top_level_source_dir), f_name)
+                        intermediate = path_diff(f_path, top_level_source_dir)
+                        missing_dirs = path_diff(intermediate, f_name)
                         target = os.path.join(top_level_target_dir, missing_dirs)
                         log.debug(f"creating: {target}")
                         if not os.path.isdir(target):
-                            local['mkdir'][target]()
+                            execute(local['mkdir']['-p', target])
+                            print(f"f_path: {f_path}\ntop_level_source_dir: {top_level_source_dir}\nintermediate: {intermediate}\nf_name: {f_name}")
+                            print(missing_dirs)
+                            exit(0)
                         trg = os.path.join(target, f_name)
                     else:
                         trg = os.path.join(top_level_target_dir, f_name)

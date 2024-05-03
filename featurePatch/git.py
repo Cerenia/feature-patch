@@ -107,8 +107,9 @@ def _map_path(path: str, to_posix=False):
     :param to_posix: Ignore windows configuration bit and transform windows -> POSIX
     :return: the transformed path
     """
-    if '/' in path and '/' in path:
-        raise InvalidPathError
+    if '/' in path and '\\' in path:
+        log.critical('Found mixed path containing both / and \\', exc_info=InvalidPathError)
+        exit(1)
     if to_posix:
         path = path.replace("\\", "/")
         path = path.replace("C:", "/c")
