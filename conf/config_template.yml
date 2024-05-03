@@ -10,6 +10,8 @@ android_drawable_root: TODO
 android_string_root: TODO
 # The top level directory of the container application project
 container_git_root: TODO
+# main/master branch name of the container
+container_main_branch_name: main
 # The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_src_root>)
 feature_git_root: TODO
 # A directory in which the feature repository will be checked out for automated git operations. Should have write access.

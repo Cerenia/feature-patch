@@ -30,6 +30,7 @@ FEATURE_TMP_CHECKOUT_LOCATION = None
 FEATURE_TMP_DIRNAME = None
 SUBREPO_VERBOSITY = None
 CONTAINER_ROOT_PATH = None
+CONTAINER_MAIN_BRANCH_NAME = None
 GITHUB_USERNAME = None
 GIT_VERBOSITY = None
 
@@ -44,6 +45,7 @@ def initialize_git_constants():
     global CONTAINER_ROOT_PATH
     global GITHUB_USERNAME
     global GIT_VERBOSITY
+    global CONTAINER_MAIN_BRANCH_NAME
     FEATURE_ROOT_PATH = configuration()["feature_git_root"]
     FEATURE_REMOTE_URL = configuration()["feature_git_remote"]
     FEATURE_ACCESS_TOKEN = configuration()["feature_github_access_token"]
@@ -51,6 +53,7 @@ def initialize_git_constants():
     FEATURE_TMP_DIRNAME = constants()["subrepo_temporary_directoryname"]
     SUBREPO_VERBOSITY = configuration()["subrepo_verbosity"]
     CONTAINER_ROOT_PATH = configuration()["container_git_root"]
+    CONTAINER_MAIN_BRANCH_NAME = configuration()["container_main_branch_name"]
     GITHUB_USERNAME = configuration()["github_username"]
     GIT_VERBOSITY = configuration()["git_verbosity"]
 
@@ -228,7 +231,7 @@ def clean_subrepo():
     execute(cmd)
 
 
-def add_subrepo():
+def commit_subrepo(message: str):
     """
     Adds any changes within the subrepository in the container and commits them.
     Preserves working directory.
@@ -242,24 +245,12 @@ def add_subrepo():
     has_match = re.search(pattern, output)
     if has_match is not None:
         execute(git["add", _path_join(_subrepo_name(), "*")])
-        execute(git["commit", "-m", "changes in subrepository"])
+        execute(git["commit", "-m", "changes in subrepository" if message is None else message])
         _navigate_to(cwd)
         return True
     _navigate_to(cwd)
     return False
 
-
-def commit_subrepo(message: str):
-    """
-    adds and commits changes to subrepo if there are any
-    """
-    changes = add_subrepo()
-    if changes:
-        log.info("Committing staged subrepo changes...")
-        cwd = os.getcwd()
-        _navigate_to(CONTAINER_ROOT_PATH)
-        execute(git["subrepo", "commit", "-m", message, _subrepo_name()])
-        _navigate_to(cwd)
 
 
 def _commit_container(message: str):
@@ -285,8 +276,6 @@ def push_subrepo(message: str):
         commit_subrepo(message)
     # Navigate to the root of the container and push the changes of the subrepository
     _navigate_to(CONTAINER_ROOT_PATH)
-    # Do a clean before attempting to push
-    clean_subrepo()
     # Push the changes to the subrepository and log the generated output
     execute(git["subrepo", SUBREPO_VERBOSITY, "-r", _authenticated_subrepo_url(), "push", _subrepo_name()])
     _navigate_to(cwd)
@@ -364,7 +353,7 @@ def merge_migration_branch(suffix: str = None):
     execute(cmd)
 
 
-def upgrade_container_to(tag: str, main_branch_name="main"):
+def upgrade_container_to(tag: str):
     """
         Fetches all tags and creates a branch for that tag. Merges the current main into the 'unmodified_branch'.
          Merges main up to this tag and finally checks out the newly created branch.
@@ -374,7 +363,7 @@ def upgrade_container_to(tag: str, main_branch_name="main"):
     log.info(f"Updating container to tag: {tag}")
     # checkout main
     _navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["checkout", main_branch_name])
+    execute(git["checkout", CONTAINER_MAIN_BRANCH_NAME])
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version
     execute(git["checkout", f"tags/{tag}", "-b", tag])
