@@ -47,6 +47,7 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     (rc, stdout, stderr) = cmd.run(retcode=retcodes)
     if retcodes is None and rc != 0:
         print(f"UNEXPECTED ERROR:\nrc: {rc}\nstdout: {stdout}\nstderr: {stderr}\n")
+        exit(1)
     if do_log:
         def formatstring_stdout(stdout_arg):
             # Empty strings are 'falsy'
