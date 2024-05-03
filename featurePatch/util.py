@@ -237,7 +237,6 @@ def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
     parts = long_path.split(short_path)
     # empty Strings are falsy https://peps.python.org/pep-0008/#programming-recommendations
     useful_parts = [element for element in filter(lambda x: x, parts)]
-    print(useful_parts)
     if tail:
         diff = useful_parts[-1]
     else:
