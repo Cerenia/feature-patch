@@ -80,9 +80,6 @@ def _duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: 
                         log.debug(f"creating: {target}")
                         if not os.path.isdir(target):
                             execute(local['mkdir']['-p', target])
-                            print(f"f_path: {f_path}\ntop_level_source_dir: {top_level_source_dir}\nintermediate: {intermediate}\nf_name: {f_name}")
-                            print(missing_dirs)
-                            exit(0)
                         trg = os.path.join(target, f_name)
                     else:
                         trg = os.path.join(top_level_target_dir, f_name)

@@ -235,7 +235,4 @@ def main():
 
 
 if __name__ == '__main__':
-    intermediate = 'components\\identity\\UnverifiedBannerView.java'
-    f_name = 'UnverifiedBannerView.java'
-    print(path_diff(intermediate, f_name))
     main()
