@@ -111,7 +111,7 @@ def _map_path(path: str, to_posix=False):
     :return: the transformed path
     """
     if '/' in path and '\\' in path:
-        log.critical('Found mixed path containing both / and \\', exc_info=InvalidPathError)
+        log.critical(f'Found mixed path containing both / and \\ for path:\n{path}', exc_info=InvalidPathError)
         exit(1)
     if to_posix:
         path = path.replace("\\", "/")

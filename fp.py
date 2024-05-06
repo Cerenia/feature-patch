@@ -133,10 +133,10 @@ def match(args):
     """
     Walk through the contact points and match the corresponding container files. Log any errors.
     """
-    print("#####\n##  Matching contact points...\n#####\n")
     initialize_git_constants()
+    print("#####\n##  Matching contact points...\n#####\n")
     checkout_container(args.branch)
-    print('after checkout')
+    print("#####\n##  After checkout...\n#####\n")
     af_match()
 
 
@@ -219,7 +219,7 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-    relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of"
+    relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of "
                                                           "the feature repository configured in config.yml")
     relink_feature.add_argument('branch', help='Which branch to check out', default='master')
     relink_feature.set_defaults(func=relink)
@@ -235,4 +235,5 @@ def main():
 
 
 if __name__ == '__main__':
+    set_debug_logger()
     main()

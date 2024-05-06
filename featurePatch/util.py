@@ -46,7 +46,7 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     run_command_counter = run_command_counter + 1
     (rc, stdout, stderr) = cmd.run(retcode=retcodes)
     if retcodes is None and rc != 0:
-        print(f"UNEXPECTED ERROR:\nrc: {rc}\nstdout: {stdout}\nstderr: {stderr}\n")
+        log.critical(f"UNEXPECTED ERROR:\nrc: {rc}\nstdout: {stdout}\nstderr: {stderr}\n")
         exit(1)
     if do_log:
         def formatstring_stdout(stdout_arg):

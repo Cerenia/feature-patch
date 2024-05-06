@@ -42,7 +42,7 @@ def set_debug_logger():
 
 
 def set_info_logger():
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
 
 
 def set_warning_logger():

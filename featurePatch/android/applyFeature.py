@@ -12,19 +12,23 @@ import re
 from plumbum import local
 
 
-def _match_files(subrepo_dir: str, container_dir: str):
+def _match_files(contact_point_subrepo: str, container_dir: str):
     """
     walks through the directory and attempts to match all the files it contains. For each success, appends the runtime record.
     for failures, appends 'errors'
-    :param subrepo_dir: root of folder to walk
+    :param contact_point_subrepo: root of folder to walk
     :param container_dir: corresponding folder in the container repository
     :param runtime_log: path to runtime log file
     """
-    for dirpath, _, filenames in os.walk(subrepo_dir):
+    for dirpath, _, filenames in os.walk(contact_point_subrepo):
         for filename in filenames:
             subrepo_filepath = os.path.join(dirpath, filename)
-            diff = path_diff(subrepo_filepath, subrepo_dir)
-            container_match = os.path.join(configuration()['android_src_root'], diff)
+            log.debug(f'subrepo_filepath: \n{subrepo_filepath}')
+            log.debug(f'subrepo_dir: \n{contact_point_subrepo}')
+            diff = path_diff(subrepo_filepath, contact_point_subrepo)
+            log.debug(f'diff: \n{diff}')
+            container_match = os.path.join(container_dir, diff)
+            log.debug(f'container_match: \n{container_match}')
             if os.path.isfile(container_match):
                 _write_runtime_record(filename, subrepo_filepath, container_match)
             else:
@@ -102,15 +106,22 @@ def match():
     for path in [runtime_record_path, error_record_path]:
         # truncate or create file
         with open(path(), "w") as f:
-            # Initiate Json Array Literal
-            f.write("[")
+            f.write("[")# Initiate Json Array Literal
 
     # go through all folders and create matchings
-    _match_files(target_code_folder(), src_code_folder())
+    print("###\n# Checking code folder...\n###\n")
+    print(target_code_folder())
+    print(src_code_folder())
+    #_match_files(target_code_folder(), src_code_folder())
     #print(target_drawable_folder())
     #print(src_drawable_folder())
-    _match_files(target_drawable_folder(), src_drawable_folder())
+    #print("###\n# Checking drawable folder...\n###\n")
+    #_match_files(target_drawable_folder(), src_drawable_folder())
+    print(target_string_folder())
+    print(src_string_folder())
+    print("###\n# Checking string (values) folder...\n###\n")
     _match_files(target_string_folder(), src_string_folder())
+    print("###\n# Checking layout folder...\n###\n")
     _match_files(target_layout_folder(), src_layout_folder())
     # Manifest
     if os.path.isfile(manifest_path(subrepo_path=True)):
