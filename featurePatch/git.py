@@ -253,15 +253,15 @@ def commit_subrepo(message: str):
 
 
 
-def _commit_container(message: str):
+def _commit_container(message: str, retcodes=None):
     """
     Add and commit any changes of the container repository.
     :return:
     """
     cwd = os.getcwd()
     _navigate_to(CONTAINER_ROOT_PATH)
-    execute(git["add", "."])
-    execute(git["commit", "-m", message])
+    execute(git["add", "."], retcodes=retcodes)
+    execute(git["commit", "-m", message], retcodes=retcodes)
     _navigate_to(cwd)
 
 
@@ -367,13 +367,12 @@ def upgrade_container_to(tag: str):
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version
     execute(git["checkout", f"tags/{tag}", "-b", tag])
+    # If 'unmodified_branch' already exists, delete it
+    execute(git["branch", "-D", constants()["unmodified_branch"]], retcodes=(0,1))
     # Create 'unmodified_branch' &
     # Merge current main into 'unmodified_branch'
     execute(git["checkout", "-b", constants()["unmodified_branch"]])
-    execute(git["merge", main_branch_name])
-    # Merge into main branch to note latest sync.
-    execute(git["checkout", main_branch_name])
-    execute(git["merge", tag])
+    execute(git["merge", CONTAINER_MAIN_BRANCH_NAME])
     execute(git["checkout", tag])
 
 
@@ -392,11 +391,12 @@ def checkout_feature(subrepo_branch: str):
     :return:
     """
     _navigate_to(CONTAINER_ROOT_PATH)
-    # Push first to not destroy anything.
-    push_subrepo(f"Push before cloning {subrepo_branch}...")
+    if os.path.isdir(os.path.join(CONTAINER_ROOT_PATH, _map_path(_subrepo_name()))):
+        # Push first to not destroy anything.
+        push_subrepo(f"Push before cloning {subrepo_branch}...")
     execute(local["rm"]["-r", _subrepo_name()], retcodes=(0, 1))
-    execute(local["mkdir"][_subrepo_name()])
-    _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.")
+    execute(local["mkdir"]["-p", _subrepo_name()])
+    _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.", retcodes=(0,1))
     execute(git["subrepo", SUBREPO_VERBOSITY, "clone", _authenticated_subrepo_url(), _subrepo_name(), "-b", subrepo_branch, "--force"])
 
 

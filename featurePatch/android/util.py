@@ -11,7 +11,7 @@ def target_drawable_folder():
 
 
 def target_string_folder():
-    return os.path.join(contact_points_folder_path(), "strings")
+    return os.path.join(contact_points_folder_path(), "values")
 
 
 def target_layout_folder():

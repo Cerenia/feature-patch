@@ -4,7 +4,7 @@ from typing import Callable
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
-from ..util import runtime_record_path, error_record_path, log, configuration, constants, print_all_diffs, DiffList
+from ..util import runtime_record_path, error_record_path, log, configuration, constants, print_all_diffs, DiffList, path_diff
 from ..git import execute, checkout_unmodified_file, unmodified_file_path
 import os
 import json
@@ -23,7 +23,8 @@ def _match_files(subrepo_dir: str, container_dir: str):
     for dirpath, _, filenames in os.walk(subrepo_dir):
         for filename in filenames:
             subrepo_filepath = os.path.join(dirpath, filename)
-            container_match = os.path.join(container_dir, filename)
+            diff = path_diff(subrepo_filepath, subrepo_dir)
+            container_match = os.path.join(configuration()['android_src_root'], diff)
             if os.path.isfile(container_match):
                 _write_runtime_record(filename, subrepo_filepath, container_match)
             else:
@@ -106,6 +107,8 @@ def match():
 
     # go through all folders and create matchings
     _match_files(target_code_folder(), src_code_folder())
+    #print(target_drawable_folder())
+    #print(src_drawable_folder())
     _match_files(target_drawable_folder(), src_drawable_folder())
     _match_files(target_string_folder(), src_string_folder())
     _match_files(target_layout_folder(), src_layout_folder())
@@ -128,6 +131,7 @@ def match():
                 content = content + "\n]"
             f.seek(0)
             f.truncate()
+            #print(content)
             f.write(content)
 
 
