@@ -235,5 +235,4 @@ def main():
 
 
 if __name__ == '__main__':
-    set_debug_logger()
     main()

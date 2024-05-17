@@ -365,8 +365,8 @@ def upgrade_container_to(tag: str):
     _navigate_to(CONTAINER_ROOT_PATH)
     execute(git["checkout", CONTAINER_MAIN_BRANCH_NAME])
     execute(git["fetch", "--all", "--tags"])
-    # Create new branch for this version
-    execute(git["checkout", f"tags/{tag}", "-b", tag])
+    # Create new branch for this version of the container onto which to apply the feature
+    execute(git["checkout", f"tags/{tag}", "-b", f'configuration()["migration_branch_subscript"]{tag}'])
     # If 'unmodified_branch' already exists, delete it
     execute(git["branch", "-D", constants()["unmodified_branch"]], retcodes=(0,1))
     # Create 'unmodified_branch' &

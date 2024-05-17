@@ -12,6 +12,8 @@ android_string_root: TODO
 container_git_root: TODO
 # main/master branch name of the container
 container_main_branch_name: main
+# ___ which will be added to the tagname to make the new container branch we are migrating to distinguishable from the original fork tag. Fit it to your project.
+migration_branch_subscript: TODO_
 # The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_src_root>)
 feature_git_root: TODO
 # A directory in which the feature repository will be checked out for automated git operations. Should have write access.
