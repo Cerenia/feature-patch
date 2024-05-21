@@ -13,6 +13,7 @@ conf_path: str = None
 run_command_counter = 1
 
 
+
 def print_all_diffs(diffs: DiffList):
     """
     Visualize all Diffs in the list by printing them on the console
@@ -247,3 +248,26 @@ def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
     if diff[-1] == sep:
         diff = diff[0:-1]
     return diff
+
+
+#####
+###  Testing
+#####
+def _inject_config(new_config):
+    """
+    Dependency injection for tests
+    """
+    global config
+    config = new_config
+
+
+def _inject_constants(new_constants):
+    """
+    Dependency injection for tests
+    """
+    global constants
+    constants = new_constants
+
+#####
+###  /Testing
+#####

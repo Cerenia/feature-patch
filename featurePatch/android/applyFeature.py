@@ -142,7 +142,6 @@ def match():
                 content = content + "\n]"
             f.seek(0)
             f.truncate()
-            #print(content)
             f.write(content)
 
 
@@ -166,11 +165,20 @@ def _generate_merged_content(match: str, contact_point: str, contact_point_path:
     checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
-    diffs = _compute_line_diff(match, contact_point)
+    return _create_diff(match, contact_point, unmodified_match_text)
+
+
+
+def _create_diff(upstream: str, modified_predecessor: str, unmodified_predecessor: str):
+    """"
+        @see _generate_merged_content
+        this is refactored for unittesting
+    """
+    diffs = _compute_line_diff(upstream, modified_predecessor)
     # Match up any changed lines between unmodified and match and change these in diffs
-    updated_code = _compute_line_diff(unmodified_match_text, match)
+    intermediate = _compute_line_diff(unmodified_predecessor, upstream)
     # Take changes to upgrade into account and turn them into equalities
-    diffs = _transform_diffs(updated_code, diffs)
+    diffs = _transform_diffs(intermediate, diffs)
     return dmp_module.diff_match_patch().diff_text2(diffs)
 
 
