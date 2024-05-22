@@ -95,8 +95,6 @@ Check and fix these files manually before continuing to the migration and applic
 
 After pushing the interface to the new branch, the `main` branch of the `container` is upgraded to the desired tag and a new branch for the reapplication and continuous development of this version is created. There, the feature `migration-branch`, which now includes the contact points are reinserted into the new `container` branch.
 
-The clean container branch from which the `feature` was derived is also checked out into its own branch (`last_unmodified_version`) to later assist the patching.
-
 ### Application
 
 #### Matching
