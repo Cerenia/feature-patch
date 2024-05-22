@@ -167,6 +167,14 @@ def merge(args):
     push_subrepo(f"Merged {args.tag} back into master.")
 
 
+def update_unmodified(args):
+    """"
+    Update unmodified to whatever was in the tag provided in the arguments.
+    Should be the same tag you are now freshly developing on.
+    """
+    update_unmodified_branch(args.tag)
+
+
 def main():
     # Revert TODO: group in test method
     # clean_subrepo()
@@ -218,6 +226,11 @@ def main():
                                                   "the master branch of the subrepository.")
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
+
+    update_unmodified = subparsers.add_parser('update_unmodified', help='Updates the unmodified branch to be the untouched'
+                                                                        'version of the current tag we are working on, ready for '
+                                                                        'the next sync.')
+    update_unmodified.set_defaults(func=update_unmodified)
 
     relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of "
                                                           "the feature repository configured in config.yml")

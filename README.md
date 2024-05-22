@@ -21,12 +21,15 @@ The first use-case was an Android project and there is thus currently a bias tow
 - [feature-patch](#feature-patch)
   - [Terminology and Design Principles](#terminology-and-design-principles)
     - [Prerequisites](#prerequisites)
+      - [Labling](#labling)
+      - [Last unmodified version](#last-unmodified-version)
     - [Extraction](#extraction)
     - [Migration](#migration)
     - [Application](#application)
       - [Matching](#matching)
       - [Patching](#patching)
     - [Merging](#merging)
+    - [Unmodified Update](#unmodified-update)
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Tutorial \& Testing](#tutorial--testing)
@@ -48,6 +51,7 @@ To facilitate the migration process, interfaces between the `feature` and the `c
 
 ### Prerequisites
 
+#### Labling
 In order to have a clear labeling, any code inserted into the `container` which calls `feature` logic, or adds elements, should be enclosed by comments containing a pseudorandom `marker` string (which must be consitent throughout the feature) and the words `start` and `end`, acting as `marker-brackets`. 
 
 For example: 
@@ -70,6 +74,12 @@ For example:
 <!--xP0w1dFQZBvxSHALdyEU MyGreatFeature start-->
 <!--xP0w1dFQZBvxSHALdyEU MyGreatFeature end-->
 ```
+
+#### Last unmodified version
+
+The diffing method needs to compare against the last version of the code onto which the feature was applied, in order not to delete any changes that occured due to the update.
+You may be able to use the method described in [Unmodified Update](#unmodified-update) for bootstrapping. Otherwise, make sure to prepare this code in a seperate branch called `last_umodified_version`.
+You the name is defined in `const.yml` and may be changed.
 
 ### Extraction
 
@@ -100,6 +110,10 @@ After the creation of the runtime log the utility will attempt to diff and merge
 ### Merging
 
 Once the application is updated back to a functional point, the merging of the now updated `feature` repository can be run. This will simply merge the current migration branch back into master and check master back out into the `container` repository. Development can now continue 'normally' on the `container` branch that was newly created for this version, without needing to worry about the subrepository until the next migration.
+
+### Unmodified Update
+
+Finally, you may run `update_unmodified` which will populate the unmodified branch with the contents of the new tag. This may also already be useful during bootstrapping.
 
 ## Installation
 

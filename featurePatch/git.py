@@ -200,7 +200,7 @@ def unmodified_file_path(filepath: str, windows=False):
     return abspath
 
 
-def checkout_unmodified_file(filepath: str):
+def _checkout_unmodified_file(filepath: str):
     """
     Checks out the previous, unmodified version of a file in the 'contact_points' folder.
     :param filepath: Which file to attempt to check out.
@@ -367,11 +367,17 @@ def upgrade_container_to(tag: str):
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version of the container onto which to apply the feature
     execute(git["checkout", f"tags/{tag}", "-b", f'configuration()["migration_branch_subscript"]{tag}'])
+
+
+def update_unmodified_branch(tag):
+    """"
+    Prepare unmodified_branch for the next sync by checking out the untouched current tag.
+    :param tag: the tag we are currently working on
+    """
     # If 'unmodified_branch' already exists, delete it
-    execute(git["branch", "-D", constants()["unmodified_branch"]], retcodes=(0,1))
-    # Create 'unmodified_branch' &
-    # Merge current main into 'unmodified_branch'
-    execute(git["checkout", "-b", constants()["unmodified_branch"]])
+    execute(git["branch", "-D", constants()["unmodified_branch"]], retcodes=(0, 1))
+    # Create 'unmodified_branch' with the new tag
+    execute(git["checkout", f"tags/{tag}", "-b", constants()["unmodified_branch"]])
     execute(git["merge", CONTAINER_MAIN_BRANCH_NAME])
     execute(git["checkout", tag])
 

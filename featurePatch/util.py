@@ -265,8 +265,8 @@ def _inject_constants(new_constants):
     """
     Dependency injection for tests
     """
-    global constants
-    constants = new_constants
+    global const
+    const = new_constants
 
 #####
 ###  /Testing

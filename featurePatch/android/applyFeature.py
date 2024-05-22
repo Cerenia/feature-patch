@@ -5,7 +5,7 @@ import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
 from ..util import runtime_record_path, error_record_path, log, configuration, constants, print_all_diffs, DiffList, path_diff
-from ..git import execute, checkout_unmodified_file, unmodified_file_path
+from ..git import execute, _checkout_unmodified_file, unmodified_file_path
 import os
 import json
 import re
@@ -162,7 +162,7 @@ def _generate_merged_content(match: str, contact_point: str, contact_point_path:
     :return: The merged text ready to be written to file.
     """
     # TODO: Will have to add corner cases as we see them and add them to the test repository
-    checkout_unmodified_file(contact_point_path)
+    _checkout_unmodified_file(contact_point_path)
     with open(unmodified_file_path(contact_point_path, configuration()["windows"]), "r", encoding="utf-8") as f:
         unmodified_match_text = f.read()
     return _create_diff(match, contact_point, unmodified_match_text)
