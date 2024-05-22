@@ -123,9 +123,19 @@ def migrate(args):
     :param args.tag: Which tag to upgrade the container to
     """
     initialize_git_constants()
-    print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
-    push_subrepo("Extracted contact points")
-    upgrade_container_to(args.tag)
+    if args.checkout_feature_only:
+        c_f_m_b(args)
+    else:
+        print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
+        push_subrepo("Extracted contact points")
+        upgrade_container_to(args.tag)
+        checkout_feature_migration_branch(args.tag)
+
+
+def c_f_m_b(args):
+    """
+    Only reinsert the feature migration branch, should not be necessary in normal operation.
+    """
     checkout_feature_migration_branch(args.tag)
 
 
@@ -135,8 +145,8 @@ def match(args):
     """
     initialize_git_constants()
     print("#####\n##  Matching contact points...\n#####\n")
-    checkout_container(args.branch)
-    print("#####\n##  After checkout...\n#####\n")
+    if args.branch:
+        checkout_container(args.branch)
     af_match()
 
 
@@ -210,11 +220,13 @@ def main():
     migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
                                                       "container to the specified tag")
     migration.add_argument('tag', help='Tag to which to migrate the container')
+    # This should only be called in abnormal operations
+    migration.add_argument('-c', '--checkout_feature_only', action='store_true',help=argparse.SUPPRESS)
     migration.set_defaults(func=migrate)
 
     matching = subparsers.add_parser('match', help="Matches up all files and creates a runtime and error log "
                                                    "documenting successes and failures.")
-    matching.add_argument('branch', help='From which branch to extract the contact point.')
+    matching.add_argument('--branch', help='Optionally check out container to the specified branch.')
     matching.set_defaults(func=match)
 
     patching = subparsers.add_parser('patch', help="Copies and patches files wherever possible, updating runtime and "
@@ -234,6 +246,7 @@ def main():
 
     relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of "
                                                           "the feature repository configured in config.yml")
+
     relink_feature.add_argument('branch', help='Which branch to check out', default='master')
     relink_feature.set_defaults(func=relink)
 
