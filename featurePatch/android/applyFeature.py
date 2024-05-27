@@ -199,19 +199,36 @@ def _compute_line_diff(text1: str, text2: str, deadline: float=None):
     return ungrouped_diff
 
 
-def _transform_diffs(diff_update: DiffList, diff_modified: DiffList):
+def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     """
     Turns any deletion in diff_update that can be matched by an insertion in diff_changes into an equality.
     # TODO: Very naive approach, may want to refine as we go
-    :param diff_update: Diff between unmodified and updated files
-    :param diff_modified: Diff between updated and modified files
-    :return: 
+    Notation:
+    ti := ti_related_diff
+    un := unrelated_diff
+    I(x) := Insertion in difflist x
+    D(x) := Deletion in difflist x
+    E(x) := Equality in difflist x
+    Algorithm:
+        if E(ti) -> E(ti)
+        if I(ti):
+            if ∃ D(un) == I(ti):
+                I(ti) -> ∅ // delete this insertion out of the set
+            else:
+                I(ti) -> E(ti)
+        if D(ti):
+            if ∃ I(ti) == D(ti):
+                D(ti) -> E(ti)
+    Sanity check, the final list should only include equalities.
+    :param unrelated_diffs: Diff between unmodified predecessor and upstream
+    :param ti_related_diff: Diff between upstream and modified_predecessor
+    :return: A mutated version of ti_related_diff, where any changes resulting from the downgrade (captured by unrelated_diffs) are ignored
     """
-    for update in diff_update:
+    for update in unrelated_diffs:
         if update[0] == 1:
             # Search for equivalent deletion in diffs and turn into equality
             new_element = ()
-            for idx, d in enumerate(diff_modified):
+            for idx, d in enumerate(ti_related_diff):
                 if d[0] == -1:
                     if d[1].strip() == update[1].strip():
                         new_element = (0, d[1])
@@ -220,12 +237,12 @@ def _transform_diffs(diff_update: DiffList, diff_modified: DiffList):
                         log.debug("The Insertion did not match the deletion:\n", update[1], "!=\n", d[1])
             if new_element != ():
                 if idx == 0:
-                    diff_modified = [new_element] + diff_modified[idx + 1:]
-                if idx == len(diff_modified) - 1:
-                    diff_modified = diff_modified[:idx] + [new_element]
+                    ti_related_diff = [new_element] + ti_related_diff[idx + 1:]
+                if idx == len(ti_related_diff) - 1:
+                    ti_related_diff = ti_related_diff[:idx] + [new_element]
                 else:
-                    diff_modified = diff_modified[0:idx] + [new_element] + diff_modified[idx + 1:]
-    return diff_modified
+                    ti_related_diff = ti_related_diff[0:idx] + [new_element] + ti_related_diff[idx + 1:]
+    return ti_related_diff
 
 
 def _group_marker_content(text: str):

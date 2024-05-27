@@ -6,9 +6,9 @@
 ###################
 
 from featurePatch.android.applyFeature import _compute_line_diff, _transform_diffs
-from featurePatch.util import configuration
+#from featurePatch.util import configuration
 
-
+"""
 def _print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, deletion=True, marker_contains=True, marker=configuration()["marker"]):
     print(title)
     print("_____________________")
@@ -31,6 +31,7 @@ def _print_first_diffs(title: str, d: list[tuple[int, str]], equality=True, dele
             print(next(str(x[0]) for x in d if marker in x[1]) + "\n", next(x[1] for x in d if marker in x[1]))
         else:
             print("No Markers in any diffs...")
+"""
 
 marker = "################"
 
@@ -99,11 +100,17 @@ result = "I\n" \
                 "you.\n"
 
 
-def _print_all_diffs(diffs):
+def _print_all_diffs(diffs, exclude=[]):
+    """
+    :param: diffs The diffs to visualize
+    :param: exclude list of exclusions 0:Equalities, -1:Deletions, 1:Insertion
+    """
     title_map = {0: "\nEquality", -1: "\nDeletion", 1: "\nInsertion"}
     for d in diffs:
-        print(f"{title_map[d[0]]}:")
-        print(d[1])
+        diff_type = d[0]
+        if diff_type not in exclude:
+            print(f"{title_map[diff_type]}:")
+            print(d[1])
 
 
 def _test_patch():
