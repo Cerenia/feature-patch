@@ -201,7 +201,10 @@ def _compute_line_diff(text1: str, text2: str, deadline: float=None):
 
 def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     """
-    Turns any deletion in diff_update that can be matched by an insertion in diff_changes into an equality.
+    Creates a list of equalities from both diffs that should result in the upstream file + any marked insertions.
+    :param unrelated_diffs: Diff between unmodified predecessor and upstream
+    :param ti_related_diff: Diff between upstream and modified_predecessor
+    :return: A mutated version of ti_related_diff, where any changes resulting from the downgrade (captured by unrelated_diffs) are ignored
     # TODO: Very naive approach, may want to refine as we go
     Notation:
     ti := ti_related_diff
@@ -220,9 +223,6 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
             if ∃ I(ti) == D(ti):
                 D(ti) -> E(ti)
     Sanity check, the final list should only include equalities.
-    :param unrelated_diffs: Diff between unmodified predecessor and upstream
-    :param ti_related_diff: Diff between upstream and modified_predecessor
-    :return: A mutated version of ti_related_diff, where any changes resulting from the downgrade (captured by unrelated_diffs) are ignored
     """
     for update in unrelated_diffs:
         if update[0] == 1:
