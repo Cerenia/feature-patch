@@ -33,6 +33,15 @@ def src_drawable_folder():
 def src_string_folder():
     return configuration()['android_string_root']
 
+def find_separator(filepath):
+    if "\\" in filepath:
+        sep = "\\"
+    elif "/" in filepath:
+        sep = "/"
+    else:
+        log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
+    return sep
+
 
 def map_contact_points_path_to_container(filepath: str):
     """
@@ -42,12 +51,7 @@ def map_contact_points_path_to_container(filepath: str):
     """
     if 'contactPoints' not in filepath:
         log.critical(f'Path:\n {filepath}\n Was not a contact points path...')
-    if "\\" in filepath:
-        sep = "\\"
-    elif "/" in filepath:
-        sep = "/"
-    else:
-        log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
+    sep = find_separator(filepath)
     path_parts = filepath.split(sep)
     filename = path_parts[-1]
     filename_idx = len(path_parts) -1

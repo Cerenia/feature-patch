@@ -253,13 +253,14 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
         if diff_type == tm['equality']:
             result.append(d)
         elif diff_type == tm['deletion']:
-            match_found = False
-            for (dt, dtext) in unrelated_diffs:
-                if dt == tm['insertion'] and fuzz.ratio(dtext, diff_text) >= min_fuzz_score:
-                    match_found = True
-                    break # found the correct match, no need to keep iterating
-            if not match_found:
-                log.critical(f'found a deletion without matching insertion: \n{diff_text}')
+            if configuration()['marker'] not in diff_text:
+                match_found = False
+                for (dt, dtext) in unrelated_diffs:
+                    if dt == tm['insertion'] and fuzz.partial_ratio(dtext, diff_text) >= min_fuzz_score:
+                        match_found = True
+                        break # found the correct match, no need to keep iterating
+                if not match_found:
+                    log.warn(f'found a deletion without matching insertion: \n{diff_text}')
             # Turn deletion into equality
             result.append((0, diff_text))
         elif diff_type == tm['insertion']:

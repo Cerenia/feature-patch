@@ -1,8 +1,9 @@
+import yaml
 from plumbum import local
 from typing import Callable
 
 from ..util import configuration, contact_points_folder_path, subrepo_path, path_diff, log, execute
-from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
+from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder, find_separator
 from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, manifest_path
 
 import os
@@ -28,6 +29,11 @@ def _prep_folders():
     mkdir[string_path]()
     mkdir[drawable_path]()
     mkdir[code_path]()
+    extra_files = yaml.safe_load(configuration()['additional_extraction_file_contact_point_paths'])
+    if extra_files is not None:
+        sep = find_separator(extra_files[0])
+        for filepath in extra_files:
+            mkdir[os.path.join(*filepath.split(sep)[0:-1]), "-p"]()
 
 
 def _extract_files():
@@ -42,6 +48,11 @@ def _extract_files():
     _duplicate_files(subrepo_path(), src_drawable_folder(), None, target_drawable_folder())
     _duplicate_files(subrepo_path(), src_string_folder(), None, target_string_folder())
     _duplicate_manifest()
+    extra_files = yaml.safe_load(configuration()['additional_extraction_file_paths'])
+    if extra_files is not None:
+        destination_paths = yaml.safe_load(configuration()['additional_extraction_file_contact_point_paths'])
+        for (idx, path) in enumerate(extra_files):
+            execute(local['cp'][path, destination_paths[idx]])
 
 
 def _duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):

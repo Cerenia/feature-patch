@@ -40,3 +40,7 @@ windows: False
 diff_context: 1
 # The number of lines to grab for the context. Will grab *at most* this many non-whitespace lines.
 diff_context_lines: 5
+# Any files that cannot be marked with a comment (e.g, .pngs) but still need to be extracted. Provided as a yaml array. These will be pure copy by default.
+additional_extraction_file_paths:  None
+# The corresponding contact point paths where these should be stored in order of appearance. These will be pure copy by default.
+additional_extraction_file_contact_point_paths: None
