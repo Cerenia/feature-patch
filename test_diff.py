@@ -1,8 +1,9 @@
 #import pytest
 import os
+import diff_match_patch as dmp_module
 from featurePatch.util import _inject_config, _inject_constants
 from featurePatch.android.applyFeature import (_line_diff, _group_marker_content, _ungroup_marker_content,
-                                               _transform_diffs, _compute_line_diff, _create_diff)
+                                               _transform_diffs, _compute_line_diff, _create_diff, _create_intermediate_diffs)
 from tests.prototest import _print_all_diffs
 
 
@@ -48,14 +49,16 @@ def test_diff():
             print(f"size text3: {len(initial_contents[1])}")
             text = _create_diff(initial_contents[0], initial_contents[1], initial_contents[2])
             contents = []
+            # We have multiple 'correct' solutions. For example, we may not care about a duplicated
+            # xml tag at the very end of the file, since this is trivial to manually resolve
             for p in expected_ps:
                 with open(p, 'r') as f:
                     contents.append(f)
-            result = any((text == t for t in contents))
+            result = any((text.strip() == t.strip() for t in contents))
             if not result:
                 # print some intermediate results
-                unmodified_modified_diff = _compute_line_diff(initial_contents[2], initial_contents[0])
-                modified_upstream_diff = _compute_line_diff(initial_contents[0], initial_contents[1])
+                (ti_related_diff, unrelated_diffs) = _create_intermediate_diffs(initial_contents[0], initial_contents[1], initial_contents[2])
+                diffs = _transform_diffs(unrelated_diffs, ti_related_diff)
                 # TODO:
                 # These should all be preserved!
                 # => Then I should find contxt for the TI_Glue insertion
@@ -66,11 +69,17 @@ def test_diff():
 
                 # Can I do this by comparing diffs between unmodified_pre and modified_pre, then searching for the index
                 # of each context line of the original diffs
-                print("####\n### unmodified_predecessor - upstream\n#####\n")
-                _print_all_diffs(unmodified_modified_diff)
+                print("####\n### ti_related_diff: upstream -> modified_predecessor\n#####\n")
+                _print_all_diffs(ti_related_diff)
 
-                print("####\n### upstream - modified_predecessor\n#####\n")
-                _print_all_diffs(modified_upstream_diff)
+                print("####\n### unrelated_diffs: unmodified_predecessor -> upstream\n#####\n")
+                _print_all_diffs(unrelated_diffs)
+
+                print("####\n### transformed diffs: should create the wanted result\n#####\n")
+                _print_all_diffs(diffs)
+
+                print("####\n### Final text: \n#####\n")
+                print(dmp_module.diff_match_patch().diff_text2(diffs))
             # Tell pytest if you succeeded or not
             assert(result)
 

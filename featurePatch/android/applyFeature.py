@@ -9,6 +9,7 @@ from ..git import execute, _checkout_unmodified_file, unmodified_file_path
 import os
 import json
 import re
+from fuzzywuzzy import fuzz
 from plumbum import local
 
 
@@ -174,12 +175,21 @@ def _create_diff(upstream: str, modified_predecessor: str, unmodified_predecesso
         @see _generate_merged_content
         this is refactored for unittesting
     """
-    diffs = _compute_line_diff(upstream, modified_predecessor)
-    # Match up any changed lines between unmodified and match and change these in diffs
-    intermediate = _compute_line_diff(unmodified_predecessor, upstream)
+    (diffs, intermediate) = _create_intermediate_diffs(upstream, modified_predecessor, unmodified_predecessor)
     # Take changes to upgrade into account and turn them into equalities
     diffs = _transform_diffs(intermediate, diffs)
     return dmp_module.diff_match_patch().diff_text2(diffs)
+
+
+def _create_intermediate_diffs(upstream: str, modified_predecessor: str, unmodified_predecessor: str):
+    """"
+        @see _generate_merged_content
+        this is refactored for unittesting
+    """
+    diffs = _compute_line_diff(upstream, modified_predecessor)
+    # Match up any changed lines between unmodified and match and change these in diffs
+    intermediate = _compute_line_diff(unmodified_predecessor, upstream)
+    return (diffs, intermediate)
 
 
 def _compute_line_diff(text1: str, text2: str, deadline: float=None):
@@ -231,6 +241,8 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
 
     result = []
 
+    min_fuzz_score = constants()['min_fuzz_score']
+
     for d in ti_related_diff:
         diff_type = d[0]
         diff_text = d[1]
@@ -239,17 +251,17 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
         elif diff_type == tm['deletion']:
             match_found = False
             for (dt, dtext) in unrelated_diffs:
-                if dt == tm['insertion'] and dtext == diff_text:
+                if dt == tm['insertion'] and fuzz.ratio(dtext, diff_text) >= min_fuzz_score:
                     match_found = True
                     break # found the correct match, no need to keep iterating
             if not match_found:
                 log.critical(f'found a deletion without matching insertion: \n{diff_text}')
-            # Tern deletion into equality
+            # Turn deletion into equality
             result.append((0, diff_text))
         elif diff_type == tm['insertion']:
             match_found = False
             for (dt, dtext) in unrelated_diffs:
-                if dt == tm['deletion'] and dtext == diff_text:
+                if dt == tm['deletion'] and fuzz.ratio(dtext, diff_text) >= min_fuzz_score:
                     match_found = True
                     break # found the correct match, no need to keep iterating
             if not match_found:
