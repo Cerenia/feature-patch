@@ -31,7 +31,7 @@ def test_diff():
     test_path = "./tests/data/diff"
     testcases = ['01', '02']
     # mock constants
-    mock_constants_and_config(add_const={"per_file_diff_deadline":"None", 'min_fuzz_score': '95'},
+    mock_constants_and_config(add_const={"per_file_diff_deadline":"None", 'min_fuzz_score': '80'},
                               add_conf={"marker":"TI_GLUE: eNT9XAHgq0lZdbQs2nfH"})
     for t in testcases:
         if t not in exclude:

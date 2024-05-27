@@ -232,6 +232,8 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
         if D(ti):
             if ∃ I(ti) == D(ti):
                 D(ti) -> E(ti)
+            else:
+                D(ti) -> E(ti) // ??? I really don't know what to do here..
     POST: The final list only includes equalities.
     """
 
@@ -242,6 +244,8 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     result = []
 
     min_fuzz_score = float(constants()['min_fuzz_score'])
+
+    # because of ordering
 
     for d in ti_related_diff:
         diff_type = d[0]
@@ -261,7 +265,7 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
         elif diff_type == tm['insertion']:
             match_found = False
             for (dt, dtext) in unrelated_diffs:
-                if dt == tm['deletion'] and fuzz.ratio(dtext, diff_text) >= min_fuzz_score:
+                if dt == tm['deletion'] and fuzz.partial_ratio(dtext, diff_text) >= min_fuzz_score:
                     match_found = True
                     break # found the correct match, no need to keep iterating
             if not match_found:

@@ -40,6 +40,8 @@ def map_contact_points_path_to_container(filepath: str):
     :param filepath: The path to the file in the contact points folder
     :return: the equivalent filepath in the container repository
     """
+    if 'contactPoints' not in filepath:
+        log.critical(f'Path:\n {filepath}\n Was not a contact points path...')
     if "\\" in filepath:
         sep = "\\"
     elif "/" in filepath:
@@ -48,18 +50,26 @@ def map_contact_points_path_to_container(filepath: str):
         log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
     path_parts = filepath.split(sep)
     filename = path_parts[-1]
+    filename_idx = len(path_parts) -1
     if len(path_parts) > 1:
-        parent_dir = path_parts[-2]
+        # find parent dir
+        idx = 0
+        while path_parts[idx] != 'contactPoints':
+            idx = idx + 1
+        parent_dir_idx = idx + 1
+        parent_dir = path_parts[parent_dir_idx]
+        intermediate_dirs = [p for (idx, p) in enumerate(path_parts) if idx > parent_dir_idx and idx < filename_idx]
         if parent_dir == "code":
-            return os.path.join(src_code_folder(), filename)
+            return os.path.join(src_code_folder(), *intermediate_dirs, filename)
         if parent_dir == "layout":
-            return os.path.join(src_layout_folder(), filename)
+            return os.path.join(src_layout_folder(), *intermediate_dirs, filename)
         if parent_dir == "strings":
-            return os.path.join(src_string_folder(), filename)
+            return os.path.join(src_string_folder(), *intermediate_dirs, filename)
         if parent_dir == "drawable":
-            return os.path.join(src_drawable_folder(), filename)
-    # Manifest file
-    return manifest_path()
+            return os.path.join(src_drawable_folder(), *intermediate_dirs, filename)
+        else:
+            # Manifest file
+            return manifest_path()
 
 
 def manifest_path(subrepo_path=False):
