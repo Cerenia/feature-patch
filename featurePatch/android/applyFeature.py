@@ -241,7 +241,7 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
 
     result = []
 
-    min_fuzz_score = constants()['min_fuzz_score']
+    min_fuzz_score = float(constants()['min_fuzz_score'])
 
     for d in ti_related_diff:
         diff_type = d[0]
