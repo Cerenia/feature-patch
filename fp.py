@@ -237,7 +237,7 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-    update_unmodified = subparsers.add_parser('update_unmodified', help='Updates the unmodified branch to be the untouched'
+    update_unmodified = subparsers.add_parser('update_unmodified', help='Updates the unmodified branch to be the untouched '
                                                                         'version of the current tag we are working on, ready for '
                                                                         'the next sync.')
     update_unmodified.set_defaults(func=update_unmodified)
