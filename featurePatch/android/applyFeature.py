@@ -222,27 +222,41 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
         if D(ti):
             if ∃ I(ti) == D(ti):
                 D(ti) -> E(ti)
-    Sanity check, the final list should only include equalities.
+    POST: The final list only includes equalities.
     """
-    for update in unrelated_diffs:
-        if update[0] == 1:
-            # Search for equivalent deletion in diffs and turn into equality
-            new_element = ()
-            for idx, d in enumerate(ti_related_diff):
-                if d[0] == -1:
-                    if d[1].strip() == update[1].strip():
-                        new_element = (0, d[1])
-                        break
-                    else:
-                        log.debug("The Insertion did not match the deletion:\n", update[1], "!=\n", d[1])
-            if new_element != ():
-                if idx == 0:
-                    ti_related_diff = [new_element] + ti_related_diff[idx + 1:]
-                if idx == len(ti_related_diff) - 1:
-                    ti_related_diff = ti_related_diff[:idx] + [new_element]
-                else:
-                    ti_related_diff = ti_related_diff[0:idx] + [new_element] + ti_related_diff[idx + 1:]
-    return ti_related_diff
+
+    # first element of the diff tuple indicates the type of diff
+    # Typemap: (-1-Deletion, 1-Insertion, 0-Equality)
+    tm = {'equality': 0, 'deletion': -1, 'insertion': 1}
+
+    result = []
+
+    for d in ti_related_diff:
+        diff_type = d[0]
+        diff_text = d[1]
+        if diff_type == tm['equality']:
+            result.append(d)
+        elif diff_type == tm['deletion']:
+            match_found = False
+            for (dt, dtext) in unrelated_diffs:
+                if dt == tm['insertion'] and dtext == diff_text:
+                    match_found = True
+                    break # found the correct match, no need to keep iterating
+            if not match_found:
+                log.critical(f'found a deletion without matching insertion: \n{diff_text}')
+            # Tern deletion into equality
+            result.append((0, diff_text))
+        elif diff_type == tm['insertion']:
+            match_found = False
+            for (dt, dtext) in unrelated_diffs:
+                if dt == tm['deletion'] and dtext == diff_text:
+                    match_found = True
+                    break # found the correct match, no need to keep iterating
+            if not match_found:
+                result.append((0, diff_text))
+            # Else we simply ignore this insertion.
+
+    return result
 
 
 def _group_marker_content(text: str):
