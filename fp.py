@@ -124,7 +124,9 @@ def migrate(args):
     """
     initialize_git_constants()
     # TODO: Maybe be a bit cleaner? should this be it's own subparser??
-    if args.checkout_feature_migration_branch_only:
+    if args.delete_container_and_feature_migration_branch:
+        delete_container_and_feature_migration_branch(args.tag)
+    elif args.checkout_feature_migration_branch_only:
         # only reinsert the feature migration branchpyth
         checkout_feature_migration_branch(args.tag)
     elif args.checkout_feature_only:
@@ -216,6 +218,8 @@ def main():
     migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
                                                       "container to the specified tag")
     migration.add_argument('tag', help='Tag to which to migrate the container')
+    # Remove the feature migration branch of the container both locally and remotely
+    migration.add_argument('-d_mb', '--delete_container_and_feature_migration_branch', action='store_true', help=argparse.SUPPRESS)
     # This should only be called in abnormal operations
     migration.add_argument('-c_mb', '--checkout_feature_migration_branch_only', action='store_true', help=argparse.SUPPRESS)
     # In this case, tag is interpreted as the branch of the feature

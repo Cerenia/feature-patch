@@ -163,17 +163,17 @@ def _authenticated_subrepo_url():
     return parts[0] + f"{GITHUB_USERNAME}:{FEATURE_ACCESS_TOKEN}" + f"@github.com{parts[1]}"
 
 
-def _migration_branch_name(suffix: str):
+def _migration_branch_name(postfix: str):
     """
     Defines format of migration branch name. Uses 'migration_branch_base_name' constant.
-    :param suffix:
+    :param postfix:
     :return:
     """
-    if suffix is not None:
-        suffix = "_" + suffix
+    if postfix is not None:
+        postfix = "_" + postfix
     else:
-        suffix = ""
-    return constants()["migration_branch_base_name"] + suffix
+        postfix = ""
+    return constants()["migration_branch_base_name"] + postfix
 
 
 def unmodified_file_path(filepath: str, windows=False):
@@ -300,6 +300,21 @@ def _create_remote_subrepo_branch(branchname: str):
     Remove local copy of subrepo.
     :param branchname: How to call the new branch
     """
+    _checkout_tmp_subrepo()
+    execute(git["checkout", "-b", branchname])
+    execute(git["push", GIT_VERBOSITY, "--repo", _authenticated_subrepo_url(), "--set-upstream", "origin", branchname])
+    _delete_temporary_feature_checkout()
+
+
+def _delete_temporary_feature_checkout():
+    _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
+    execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
+
+
+def _checkout_tmp_subrepo():
+    """
+    Checkout master branch of subrepo in temporary location.
+    """
     _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
     # Idempotence
     if _isdir(FEATURE_TMP_DIRNAME):
@@ -310,19 +325,21 @@ def _create_remote_subrepo_branch(branchname: str):
     execute(git["clone", GIT_VERBOSITY, _authenticated_subrepo_url()])
     output = execute(local["ls"])
     _navigate_to(output.strip())
-    execute(git["checkout", "-b", branchname])
-    execute(git["push", GIT_VERBOSITY, "--repo", _authenticated_subrepo_url(), "--set-upstream", "origin", branchname])
-    _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
-    execute(local["rm"]["-r", FEATURE_TMP_DIRNAME])
 
 
-def delete_local_migration_branch(suffix: str = None):
+def delete_container_and_feature_migration_branch(tag: str):
     """
-    Remove local migration branch
-    :param suffix: added to the 'migration' name if provided
+    Removes the migration branch locally and remotely.
+    Mainly intended to revert operations if an error occured (e.g., between migration and extraction)
     """
+    _navigate_to(CONTAINER_ROOT_PATH)
+    execute(git["push", "origin", "--delete", _migration_branch_name(tag)], retcodes=(0,1))
+    execute(git['branch', "-d", _migration_branch_name(tag)], retcodes=(0,1))
     _navigate_to(FEATURE_TMP_CHECKOUT_LOCATION)
-    execute(git["branch", GIT_VERBOSITY, "-D", _migration_branch_name(suffix)])
+    _checkout_tmp_subrepo()
+    execute(git["push", GIT_VERBOSITY, "origin", "--delete", _migration_branch_name(tag)], retcodes=(0,1))
+    execute(git['branch', GIT_VERBOSITY, "-d", _migration_branch_name(tag)], retcodes=(0, 1))
+    _delete_temporary_feature_checkout()
 
 
 def merge_migration_branch(suffix: str = None):
@@ -397,9 +414,10 @@ def checkout_feature(subrepo_branch: str):
     :return:
     """
     _navigate_to(CONTAINER_ROOT_PATH)
-    if os.path.isdir(os.path.join(CONTAINER_ROOT_PATH, _map_path(_subrepo_name()))):
-        # Push first to not destroy anything.
-        push_subrepo(f"Push before cloning {subrepo_branch}...")
+    # TODO: Not sure this is really needed... seems to cause more problems than good
+    #if os.path.isdir(os.path.join(CONTAINER_ROOT_PATH, _map_path(_subrepo_name()))):
+    #    # Push first to not destroy anything.
+    #    push_subrepo(f"Push before cloning {subrepo_branch}...")
     execute(local["rm"]["-r", _subrepo_name()], retcodes=(0, 1))
     execute(local["mkdir"]["-p", _subrepo_name()])
     _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.", retcodes=(0,1))
