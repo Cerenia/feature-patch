@@ -33,7 +33,7 @@ def _prep_folders():
     if extra_files is not None:
         sep = find_separator(extra_files[0])
         for filepath in extra_files:
-            execute(mkdir[os.path.join(*filepath.split(sep)[0:-1]), "-p"])
+            execute(mkdir[sep.join(filepath.split(sep)[0:-1]), "-p"])
 
 
 def _extract_files():
@@ -52,7 +52,8 @@ def _extract_files():
     if extra_files is not None:
         destination_paths = configuration()['additional_extraction_file_contact_point_paths']
         for (idx, path) in enumerate(extra_files):
-            execute(local['cp'][path, destination_paths[idx]])
+            sep = find_separator(destination_paths[idx])
+            execute(local['cp'][path, sep.join(destination_paths[idx].split(sep)[0:-1])])
 
 
 def _duplicate_files(subrepo_path: str, top_level_source_dir: str, current_dir: str, top_level_target_dir: str):
