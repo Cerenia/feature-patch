@@ -1,5 +1,5 @@
 import os
-from ..util import contact_points_folder_path, configuration, constants, log
+from ..util import contact_points_folder_path, configuration, constants, log, find_separator
 
 
 def target_code_folder():
