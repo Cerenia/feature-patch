@@ -29,9 +29,12 @@ def _contents_equal(path1: str, path2: str):
 
 def test_diff():
     exclude = ['02']
+    #exclude = []
 
     test_path = "./tests/data/diff"
-    testcases = ['01', '02', '03', '04']
+    testcases = list(set(filename.split('-')[0] for filename in os.listdir(test_path)))
+    testcases.sort()
+
     # mock constants
     (configs, constants) = mock_constants_and_config(add_const={"per_file_diff_deadline":"None", 'min_fuzz_score': '80'},
                               add_conf={"marker":"TI_GLUE: eNT9XAHgq0lZdbQs2nfH"})
@@ -45,7 +48,7 @@ def test_diff():
             expected_ps = [os.path.join(test_path, filename) for filename in filter(lambda fname: 'expected' in fname, files)]
             initial_contents = []
             for p in (upstream_p, predecessor_p, untouched_pre_p):
-                with open(p, 'r') as f:
+                with open(p, 'r', encoding='utf-8') as f:
                     initial_contents.append(f.read())
             text = _create_diff(initial_contents[0], initial_contents[1], initial_contents[2])
             contents = []

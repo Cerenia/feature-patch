@@ -305,14 +305,18 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
                         # along these lines, but trying this for now and seeing if it's good enough
         # Remove all the fuzzy matched insertions from intermediate
         for fmi in fuzzy_matched_insertions:
-            intermediate.remove(fmi)
+            log.info(f"removed fuzzy insertion match for unmatched deletion:\n{fmi}")
+            try:
+                intermediate.remove(fmi)
+            except ValueError as e:
+                log.warn(f"ValueError, a fuzzy match had already been removed: \n{fmi}")
         # Finally go through all the diffs again and turn any trailing insertions into equalities
     result = []
     for (dtype, dtext) in intermediate:
         if dtype == 1:
-            result.append(0, dtext)
+            result.append((0, dtext))
         else:
-            assert(dtype == 0) # There should be only equalities except for some insertions
+            assert(dtype == 0) # There should be only equalities except for insertions
             result.append((dtype, dtext))
     return result
 
@@ -400,7 +404,7 @@ def patch():
             exit(1)
         finally:
             # Write the updated record to file after each iteration
-            records[current_record]["diffed"] = True
+            records[current_record]["processed"] = True
             with open(runtime_record_path(), "w") as f:
                 f.write(json.dumps(records, indent=1))
             current_record = current_record + 1

@@ -9,4 +9,4 @@ android_manifest_file: AndroidManifest.xml
 # Approximate deadline for the diffing process of each file [s]
 per_file_diff_deadline: None
 # used for similarity testing while diffing
-min_fuzz_score: 90
+min_fuzz_score: 80
