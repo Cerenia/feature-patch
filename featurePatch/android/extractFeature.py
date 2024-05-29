@@ -29,7 +29,7 @@ def _prep_folders():
     mkdir[string_path]()
     mkdir[drawable_path]()
     mkdir[code_path]()
-    extra_files = yaml.safe_load(configuration()['additional_extraction_file_contact_point_paths'])
+    extra_files = configuration()['additional_extraction_file_contact_point_paths']
     if extra_files is not None:
         sep = find_separator(extra_files[0])
         for filepath in extra_files:
@@ -48,9 +48,9 @@ def _extract_files():
     _duplicate_files(subrepo_path(), src_drawable_folder(), None, target_drawable_folder())
     _duplicate_files(subrepo_path(), src_string_folder(), None, target_string_folder())
     _duplicate_manifest()
-    extra_files = yaml.safe_load(configuration()['additional_extraction_file_paths'])
+    extra_files = configuration()['additional_extraction_file_paths']
     if extra_files is not None:
-        destination_paths = yaml.safe_load(configuration()['additional_extraction_file_contact_point_paths'])
+        destination_paths = configuration()['additional_extraction_file_contact_point_paths']
         for (idx, path) in enumerate(extra_files):
             execute(local['cp'][path, destination_paths[idx]])
 

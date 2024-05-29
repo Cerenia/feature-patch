@@ -123,20 +123,18 @@ def migrate(args):
     :param args.tag: Which tag to upgrade the container to
     """
     initialize_git_constants()
-    if args.checkout_feature_only:
-        c_f_m_b(args)
+    # TODO: Maybe be a bit cleaner? should this be it's own subparser??
+    if args.checkout_feature_migration_branch_only:
+        # only reinsert the feature migration branchpyth
+        checkout_feature_migration_branch(args.tag)
+    elif args.checkout_feature_only:
+        # only reinsert any feature branch
+        checkout_feature(args.tag)
     else:
         print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
         push_subrepo("Extracted contact points")
         upgrade_container_to(args.tag)
         checkout_feature_migration_branch(args.tag)
-
-
-def c_f_m_b(args):
-    """
-    Only reinsert the feature migration branch, should not be necessary in normal operation.
-    """
-    checkout_feature_migration_branch(args.tag)
 
 
 def match(args):
@@ -219,7 +217,9 @@ def main():
                                                       "container to the specified tag")
     migration.add_argument('tag', help='Tag to which to migrate the container')
     # This should only be called in abnormal operations
-    migration.add_argument('-c', '--checkout_feature_only', action='store_true',help=argparse.SUPPRESS)
+    migration.add_argument('-c_mb', '--checkout_feature_migration_branch_only', action='store_true', help=argparse.SUPPRESS)
+    # In this case, tag is interpreted as the branch of the feature
+    migration.add_argument('-c', '--checkout_feature_only', action='store_true', help=argparse.SUPPRESS)
     migration.set_defaults(func=migrate)
 
     matching = subparsers.add_parser('match', help="Matches up all files and creates a runtime and error log "
