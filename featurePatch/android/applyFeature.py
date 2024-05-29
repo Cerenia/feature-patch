@@ -228,31 +228,36 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     I(x) := Insertion in difflist x
     D(x) := Deletion in difflist x
     E(x) := Equality in difflist x
-    Algorithm:
-        if E(ti) -> E(ti)
-        if I(ti):
-            if ∃ D(un) == I(ti):
-                I(ti) -> ∅ // delete this insertion out of the set
-            else:
-                I(ti) -> E(ti)
-        if D(ti):
-            if ∃ I(ti) == D(ti):
-                D(ti) -> E(ti)
-            else:
-                D(ti) -> E(ti) // ??? I really don't know what to do here..
-    POST: The final list only includes equalities.
+    if unrelated_diffs only contain equalities:
+        # This catches things like trivial ',' -> ';' substitutions which would otherwise create duplicate lines
+        keep ti_related_diff as is (we want to keep the version that we had manually modified without any changes)
+    else:
+        Algorithm:
+            if E(ti) -> E(ti)
+            if I(ti):
+                if ∃ D(un) == I(ti):
+                    I(ti) -> ∅ // delete this insertion out of the set
+                else:
+                    I(ti) -> E(ti)
+            if D(ti):
+                if ∃ I(ti) == D(ti):
+                    D(ti) -> E(ti)
+                else:
+                    D(ti) -> E(ti) // ??? I really don't know what to do here..
+        POST: The final list only includes equalities.
     """
-
-    # first element of the diff tuple indicates the type of diff
     # Typemap: (-1-Deletion, 1-Insertion, 0-Equality)
     tm = {'equality': 0, 'deletion': -1, 'insertion': 1}
+
+    # first element of the diff tuple indicates the type of diff
+    if all(dt == tm['equality'] for (dt, _) in unrelated_diffs):
+        return ti_related_diff
 
     result = []
 
     min_fuzz_score = float(constants()['min_fuzz_score'])
 
     # because of ordering
-
     for d in ti_related_diff:
         diff_type = d[0]
         diff_text = d[1]
@@ -278,7 +283,6 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
             if not match_found:
                 result.append((0, diff_text))
             # Else we simply ignore this insertion.
-
     return result
 
 
