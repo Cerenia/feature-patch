@@ -23,17 +23,17 @@ def _prep_folders():
     rm = local['rm']
     log.info("Clearing/creating layout, string, drawable, code directories at:")
     log.info(contact_points_folder_path())
-    rm["-r", "-v", "-f", contact_points_folder_path()]()
-    mkdir[contact_points_folder_path()]()
-    mkdir[layout_path]()
-    mkdir[string_path]()
-    mkdir[drawable_path]()
-    mkdir[code_path]()
+    execute(rm["-r", "-v", "-f", contact_points_folder_path()])
+    execute(mkdir[contact_points_folder_path()])
+    execute(mkdir[layout_path])
+    execute(mkdir[string_path])
+    execute(mkdir[drawable_path])
+    execute(mkdir[code_path])
     extra_files = configuration()['additional_extraction_file_contact_point_paths']
     if extra_files is not None:
         sep = find_separator(extra_files[0])
         for filepath in extra_files:
-            mkdir[os.path.join(*filepath.split(sep)[0:-1]), "-p"]()
+            execute(mkdir[os.path.join(*filepath.split(sep)[0:-1]), "-p"])
 
 
 def _extract_files():
