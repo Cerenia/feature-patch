@@ -114,6 +114,7 @@ def extract(args):
     create_feature_migration_branch(args.tag)
     checkout_feature_migration_branch(args.tag)
     extract_feature()
+    push_subrepo("Extracted contact points")
 
 
 def migrate(args):
@@ -134,7 +135,6 @@ def migrate(args):
         checkout_feature(args.tag)
     else:
         print(f"#####\n##  Migrating to tag {args.tag}\n#####\n")
-        push_subrepo("Extracted contact points")
         upgrade_container_to(args.tag)
         checkout_feature_migration_branch(args.tag)
 
@@ -211,12 +211,14 @@ def main():
     enrich_with_config_options()
 
     extraction = subparsers.add_parser('extract', help="Extracts current interface and pushes it to a new branch of "
-                                                       "the subrepository named after the provided tag.")
+                                                       "the subrepository named after the provided tag. "
+                                                       "Finally pushed the new branch to the remote subrepo.")
     extraction.add_argument('tag', help='Tag to which to migrate the container')
     extraction.set_defaults(func=extract)
 
-    migration = subparsers.add_parser('migrate', help="Push contact points to feature migration branch and update the "
-                                                      "container to the specified tag")
+    migration = subparsers.add_parser('migrate', help="Update the container to the specified tag and checkout "
+                                                      "new subrepo branch containing the contact points. Extra hidden args "
+                                                      "exist to facilitate debugging and branch removal, see source for details.")
     migration.add_argument('tag', help='Tag to which to migrate the container')
     # Remove the feature migration branch of the container both locally and remotely
     migration.add_argument('-d_mb', '--delete_container_and_feature_migration_branch', action='store_true', help=argparse.SUPPRESS)

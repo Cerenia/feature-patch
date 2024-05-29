@@ -33,7 +33,7 @@ def _prep_folders():
     if extra_files is not None:
         sep = find_separator(extra_files[0])
         for filepath in extra_files:
-            execute(mkdir[sep.join(filepath.split(sep)[0:-1]), "-p"])
+            execute(mkdir[sep.join(filepath.split(sep)[0:-1])])
 
 
 def _extract_files():
