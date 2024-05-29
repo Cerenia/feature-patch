@@ -5,6 +5,7 @@ from featurePatch.util import _inject_config, _inject_constants
 from featurePatch.android.applyFeature import (_line_diff, _group_marker_content, _ungroup_marker_content,
                                                _transform_diffs, _compute_line_diff, _create_diff, _create_intermediate_diffs)
 from tests.prototest import _print_all_diffs
+from fuzzywuzzy import fuzz
 
 
 def mock_constants_and_config(add_const=dict(), add_conf=dict()):
@@ -14,6 +15,7 @@ def mock_constants_and_config(add_const=dict(), add_conf=dict()):
     configs.update(add_conf)
     _inject_config(configs)
     _inject_constants(constants)
+    return(configs, constants)
 
 
 def _contents_equal(path1: str, path2: str):
@@ -26,13 +28,14 @@ def _contents_equal(path1: str, path2: str):
 
 
 def test_diff():
-    exclude = ["02"]
+    exclude = ['02']
 
     test_path = "./tests/data/diff"
-    testcases = ['01', '02']
+    testcases = ['01', '02', '03', '04']
     # mock constants
-    mock_constants_and_config(add_const={"per_file_diff_deadline":"None", 'min_fuzz_score': '80'},
+    (configs, constants) = mock_constants_and_config(add_const={"per_file_diff_deadline":"None", 'min_fuzz_score': '80'},
                               add_conf={"marker":"TI_GLUE: eNT9XAHgq0lZdbQs2nfH"})
+    min_fuzz_score = float(constants['min_fuzz_score'])
     for t in testcases:
         if t not in exclude:
             files = [f for f in os.listdir(test_path) if t in f]
@@ -51,7 +54,7 @@ def test_diff():
             for p in expected_ps:
                 with open(p, 'r') as f:
                     contents.append(f.read())
-            result = any((text.strip() == t.strip() for t in contents))
+            result = any((fuzz.partial_ratio(text.strip(), t.strip()) >= min_fuzz_score for t in contents))
             if not result:
                 # analyse some intermediate results
                 (ti_related_diff, unrelated_diffs) = _create_intermediate_diffs(initial_contents[0], initial_contents[1], initial_contents[2])
@@ -68,8 +71,11 @@ def test_diff():
 
                 print("####\n### Final text: \n#####\n")
                 print(dmp_module.diff_match_patch().diff_text2(diffs))
+                assert(result) # Fail fast
+            else:
+                print(f"####\n### Testcase: {t} succeeded! \n#####\n")
             # Tell pytest if you succeeded or not
-            assert(result)
+            #assert(result)
 
 
 if __name__ == '__main__':

@@ -217,7 +217,7 @@ def _compute_line_diff(text1: str, text2: str, deadline: float=None):
 
 def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     """
-    Creates a list of equalities from both diffs that should result in the upstream file + any marked insertions.
+    Creates a list of equalities from both diffs that should intermediate in the upstream file + any marked insertions.
     :param unrelated_diffs: Diff between unmodified predecessor and upstream
     :param ti_related_diff: Diff between upstream and modified_predecessor
     :return: A mutated version of ti_related_diff, where any changes resulting from the downgrade (captured by unrelated_diffs) are ignored
@@ -238,12 +238,16 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
                 if ∃ D(un) == I(ti):
                     I(ti) -> ∅ // delete this insertion out of the set
                 else:
-                    I(ti) -> E(ti)
+                    I(ti) -> I(ti)
             if D(ti):
                 if ∃ I(ti) == D(ti):
                     D(ti) -> E(ti)
                 else:
-                    D(ti) -> E(ti) // ??? I really don't know what to do here..
+                    D(ti) -> E(ti) && store index =: (E_um, idx) // unmatched equality (stemming from deletion) with index
+        if set((E_um, idx)) != ∅: // try to find a fuzzy insertion match in that can replace the equality
+            ∀ found fuzzy matches, remove matched insertion out of results
+        finally:
+            ∀ I(res) -> E(res)
         POST: The final list only includes equalities.
     """
     # Typemap: (-1-Deletion, 1-Insertion, 0-Equality)
@@ -253,16 +257,19 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
     if all(dt == tm['equality'] for (dt, _) in unrelated_diffs):
         return ti_related_diff
 
-    result = []
+    intermediate = []
 
     min_fuzz_score = float(constants()['min_fuzz_score'])
+
+    #(idx, (_, text)) as found in results
+    unmatched_deletions = []
 
     # because of ordering
     for d in ti_related_diff:
         diff_type = d[0]
         diff_text = d[1]
         if diff_type == tm['equality']:
-            result.append(d)
+            intermediate.append(d)
         elif diff_type == tm['deletion']:
             if configuration()['marker'] not in diff_text:
                 match_found = False
@@ -271,9 +278,10 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
                         match_found = True
                         break # found the correct match, no need to keep iterating
                 if not match_found:
+                    unmatched_deletions.append(diff_text)
                     log.warn(f'found a deletion without matching insertion: \n{diff_text}')
             # Turn deletion into equality
-            result.append((0, diff_text))
+            intermediate.append((0, diff_text))
         elif diff_type == tm['insertion']:
             match_found = False
             for (dt, dtext) in unrelated_diffs:
@@ -281,8 +289,31 @@ def _transform_diffs(unrelated_diffs: DiffList, ti_related_diff: DiffList):
                     match_found = True
                     break # found the correct match, no need to keep iterating
             if not match_found:
-                result.append((0, diff_text))
+                intermediate.append((1, diff_text))
             # Else we simply ignore this insertion.
+    if len(unmatched_deletions) > 0:
+        # (idx, (_, text)) as found in results
+        fuzzy_matched_insertions = []
+        # Try to find fuzzy matches with any insertion
+        for text in unmatched_deletions:
+            for (diff_type, diff_text) in intermediate:
+                if diff_type == 1:
+                    if fuzz.partial_ratio(text, diff_text) >= min_fuzz_score:
+                        fuzzy_matched_insertions.append((diff_type, diff_text))
+                        break # TODO: we only consider the first match, this could cause problems...
+                        # one option would be to find the insertion that is closest to the deletion or something
+                        # along these lines, but trying this for now and seeing if it's good enough
+        # Remove all the fuzzy matched insertions from intermediate
+        for fmi in fuzzy_matched_insertions:
+            intermediate.remove(fmi)
+        # Finally go through all the diffs again and turn any trailing insertions into equalities
+    result = []
+    for (dtype, dtext) in intermediate:
+        if dtype == 1:
+            result.append(0, dtext)
+        else:
+            assert(dtype == 0) # There should be only equalities except for some insertions
+            result.append((dtype, dtext))
     return result
 
 
