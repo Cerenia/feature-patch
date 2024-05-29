@@ -383,7 +383,7 @@ def upgrade_container_to(tag: str):
     execute(git["checkout", CONTAINER_MAIN_BRANCH_NAME])
     execute(git["fetch", "--all", "--tags"])
     # Create new branch for this version of the container onto which to apply the feature
-    execute(git["checkout", f"tags/{tag}", "-b", f'configuration()["migration_branch_subscript"]{tag}'])
+    execute(git["checkout", f"tags/{tag}", "-b", f'{configuration()["migration_branch_subscript"]}{tag}'])
 
 
 def update_unmodified_branch(tag):

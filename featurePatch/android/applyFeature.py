@@ -4,7 +4,7 @@ from typing import Callable
 import diff_match_patch as dmp_module
 from .util import target_code_folder, target_drawable_folder, target_string_folder, target_layout_folder
 from .util import src_drawable_folder, src_string_folder, src_layout_folder, src_code_folder, manifest_path
-from ..util import runtime_record_path, error_record_path, log, configuration, constants, print_all_diffs, DiffList, path_diff
+from ..util import runtime_record_path, error_record_path, log, configuration, constants, find_separator, DiffList, path_diff
 from ..git import execute, _checkout_unmodified_file, unmodified_file_path
 import os
 import json
@@ -110,23 +110,29 @@ def match():
             f.write("[")# Initiate Json Array Literal
 
     # go through all folders and create matchings
-    print("###\n# Checking code folder...\n###\n")
-    #print(target_code_folder())
-    #print(src_code_folder())
+    log.info("###\n# Checking code folder...\n###\n")
     _match_files(target_code_folder(), src_code_folder())
-    #print(target_drawable_folder())
-    #print(src_drawable_folder())
-    #print("###\n# Checking drawable folder...\n###\n")
+    log.info("###\n# Checking drawable folder...\n###\n")
     _match_files(target_drawable_folder(), src_drawable_folder())
-    #print(target_string_folder())
-    #print(src_string_folder())
-    print("###\n# Checking string (values) folder...\n###\n")
+    log.info("###\n# Checking string (values) folder...\n###\n")
     _match_files(target_string_folder(), src_string_folder())
-    print("###\n# Checking layout folder...\n###\n")
+    log.info("###\n# Checking layout folder...\n###\n")
     _match_files(target_layout_folder(), src_layout_folder())
-    # Manifest
+    log.info("###\n# Checking manifest...\n###\n")
     if os.path.isfile(manifest_path(subrepo_path=True)):
         _write_runtime_record("AndroidManifest.xml", manifest_path(subrepo_path=True), manifest_path())
+    extra_files = configuration()['additional_extraction_file_contact_point_paths']
+    if extra_files is not None:
+        log.info("###\n# Checking any extra files...\n###\n")
+        targets = configuration()['additional_extraction_file_paths']
+        sep = None
+        for (idx, filepath) in enumerate(extra_files):
+            if sep is None:
+                sep = find_separator(filepath)
+            # Assume pure copy file for all of these. TODO: Is this assumption correct?
+            _write_runtime_record(filepath.split(sep)[-1], filepath, os.path.join(*targets[idx].split(sep)[0:-1], '.'))
+
+
 
     # Close Json Array Literal
     for path in [runtime_record_path, error_record_path]:

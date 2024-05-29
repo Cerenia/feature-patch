@@ -33,15 +33,6 @@ def src_drawable_folder():
 def src_string_folder():
     return configuration()['android_string_root']
 
-def find_separator(filepath):
-    if "\\" in filepath:
-        sep = "\\"
-    elif "/" in filepath:
-        sep = "/"
-    else:
-        log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
-    return sep
-
 
 def map_contact_points_path_to_container(filepath: str):
     """

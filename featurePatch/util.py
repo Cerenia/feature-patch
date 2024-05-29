@@ -250,6 +250,15 @@ def path_diff(long_path: str, short_path: str, sep=os.sep, tail=True):
     return diff
 
 
+def find_separator(filepath):
+    if "\\" in filepath:
+        sep = "\\"
+    elif "/" in filepath:
+        sep = "/"
+    else:
+        log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
+    return sep
+
 #####
 ###  Testing
 #####

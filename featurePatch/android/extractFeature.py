@@ -2,8 +2,8 @@ import yaml
 from plumbum import local
 from typing import Callable
 
-from ..util import configuration, contact_points_folder_path, subrepo_path, path_diff, log, execute
-from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder, find_separator
+from ..util import configuration, contact_points_folder_path, subrepo_path, path_diff, log, execute, find_separator
+from .util import target_code_folder, target_string_folder, target_drawable_folder, target_layout_folder
 from .util import src_layout_folder, src_string_folder, src_drawable_folder, src_code_folder, manifest_path
 
 import os
