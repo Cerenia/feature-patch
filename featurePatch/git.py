@@ -24,7 +24,6 @@ git = local['git']
 ###
 
 FEATUFEATURE_ROOT_PATH = None
-FEATURE_REMOTE_UR = None
 FEATURE_ACCESS_TOKEN = None
 FEATURE_TMP_CHECKOUT_LOCATION = None
 FEATURE_TMP_DIRNAME = None
@@ -37,7 +36,6 @@ GIT_VERBOSITY = None
 
 def initialize_git_constants():
     global FEATURE_ROOT_PATH
-    global FEATURE_REMOTE_URL
     global FEATURE_ACCESS_TOKEN
     global FEATURE_TMP_CHECKOUT_LOCATION
     global FEATURE_TMP_DIRNAME
@@ -47,7 +45,6 @@ def initialize_git_constants():
     global GIT_VERBOSITY
     global CONTAINER_MAIN_BRANCH_NAME
     FEATURE_ROOT_PATH = configuration()["feature_git_root"]
-    FEATURE_REMOTE_URL = configuration()["feature_git_remote"]
     FEATURE_ACCESS_TOKEN = configuration()["feature_github_access_token"]
     FEATURE_TMP_CHECKOUT_LOCATION = configuration()["feature_git_temp_root"]
     FEATURE_TMP_DIRNAME = constants()["subrepo_temporary_directoryname"]
@@ -159,8 +156,11 @@ def _authenticated_subrepo_url():
     PRE: Assumes repository is hosted on github and credentials are set in config.
     :return: remote url which already contains username and token to skip manual entries
     """
-    parts = FEATURE_REMOTE_URL.split("github.com")
-    return parts[0] + f"{GITHUB_USERNAME}:{FEATURE_ACCESS_TOKEN}" + f"@github.com{parts[1]}"
+    if configuration()['checkout_feature_with_ssh']:
+        return configuration()['feature_git_remote_ssh']
+    else:
+        parts = configuration()['feature_git_remote_https'].split("github.com")
+        return parts[0] + f"{GITHUB_USERNAME}:{FEATURE_ACCESS_TOKEN}" + f"@github.com{parts[1]}"
 
 
 def _migration_branch_name(postfix: str):
@@ -365,7 +365,7 @@ def merge_migration_branch(suffix: str = None):
     if "master" not in lines[idx]:
         log.critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
         exit(1)
-
+    FEATURE_REMOTE_URL = configuration()['feature_git_remote_ssh'] if configuration()['checkout_feature_with_ssh'] else configuration()['feature_git_remote_https']
     cmd = git["subrepo", "clone", f"--branch={_migration_branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_ROOT_PATH]
     execute(cmd)
 
@@ -421,7 +421,8 @@ def checkout_feature(subrepo_branch: str):
     execute(local["rm"]["-r", _subrepo_name()], retcodes=(0, 1))
     execute(local["mkdir"]["-p", _subrepo_name()])
     _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.", retcodes=(0,1))
-    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", _authenticated_subrepo_url(), _subrepo_name(), "-b", subrepo_branch, "--force"])
+    url = configuration()['feature_git_remote_ssh'] if configuration()['checkout_feature_with_ssh'] else configuration()['feature_git_remote_https']
+    execute(git["subrepo", SUBREPO_VERBOSITY, "clone", url, _subrepo_name(), "-b", subrepo_branch, "--force"])
 
 
 def checkout_container(branch):
