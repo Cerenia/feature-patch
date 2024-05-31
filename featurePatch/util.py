@@ -158,7 +158,7 @@ def clear_contact_points():
     execute(local["rm"][contact_points_folder_path(), "-r"], retcodes=(0, 1))
 
 
-def add_to_config_template():
+def add_to_config_template(args):
     """
      Run whenever you add a new configuration variable,
      Preserves comments above the variables
@@ -174,7 +174,9 @@ def add_to_config_template():
         configuration_lines = f.readlines()
     template_lines = []
     for line in configuration_lines:
-        if "#" in line:
+        stripped_line = line.strip()
+        if len(stripped_line) == 0 or line.strip()[0] == '#':
+            # just append comments and pure whitespace lines
             template_lines.append(line)
         else:
             element = yaml.safe_load(line)

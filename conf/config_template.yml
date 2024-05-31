@@ -10,19 +10,25 @@ android_drawable_root: TODO
 android_string_root: TODO
 # The top level directory of the container application project
 container_git_root: TODO
-# main/master branch name of the container
-container_main_branch_name: main
-# ___ which will be added to the tagname to make the new container branch we are migrating to distinguishable from the original fork tag. Fit it to your project.
-migration_branch_subscript: TODO_
+# Main/Master branch name of the container
+container_main_branch_name: TODO
+# ___ which will be added to the tag name to make the new container branch we are migrating to distinguishable from the original fork tag. Fit it to your project.
+migration_branch_subscript: TODO
 # The top level directory of the subrepository, embedded into the container (must be a subdirectory of <android_src_root>)
 feature_git_root: TODO
 # A directory in which the feature repository will be checked out for automated git operations. Should have write access.
 feature_git_temp_root: TODO
+# The name of your feature repo
+feature_git_repo_name: TODO
 # https url (e.g., Github) of the feature
-feature_git_remote: TODO
+feature_git_remote_https: TODO
+# ssh url (e.g., Github) of the feature
+feature_git_remote_ssh: TODO
+# Which method to use to checkout feature (we cannot ebmed the access token for this operation as pushing to the container will invalidate it otherwise since the token is captured in the .gitrepo file)
+checkout_feature_with_ssh: True
 # Used to automate branching to remote for migration
 github_username: TODO
-# Strongly recommended to create a fine grained token that only provides access to the feature repository, as this will show up in local logs and bash history.
+# Strongly recommended to create a fine grained token that only provides access to the feature repository, as this will show up in local logs and bash history. We will need this to avoid asking for a password for each operation if you check out with https, though initial cloning will always ask for your token manually as the url will be written to .gitrepo (and the token invalidated on subsequent pushed to the container)
 feature_github_access_token: TODO
 # The marker used in the container wherever feature code is integrated. Used to extract the contact points.
 marker: TODO
@@ -34,13 +40,13 @@ working_dir: TODO
 subrepo_verbosity: -dv
 # Flag for Git
 git_verbosity: -v
-# indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
-windows: False
+# Indicates if we are running a Linux emulation under windows (needed for path remaps in 'git' code). False is correct for most users.
+windows: TODO
 # Where to insert matching context. -1 => before the insert, 1 => after the insert
-diff_context: 1
+diff_context: TODO
 # The number of lines to grab for the context. Will grab *at most* this many non-whitespace lines.
 diff_context_lines: 5
 # Any files that cannot be marked with a comment (e.g, .pngs) but still need to be extracted. Provided as a yaml array. These will be pure copy by default.
-additional_extraction_file_paths:  None
-# The corresponding contact point paths where these should be stored in order of appearance. These will be pure copy by default.
-additional_extraction_file_contact_point_paths: None
+additional_extraction_file_paths: TODO
+# The corresponding contact point paths where these should be stored in order of appearance. Provided as a yaml array. These will be pure copy by default.
+additional_extraction_file_contact_point_paths: TODO
