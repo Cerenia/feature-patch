@@ -162,12 +162,13 @@ def patch(args):
 def merge(args):
     """
     Merges changes done to the migration branch of the feature back into master and checks out master for continued
-    development.
+    development. Only call once you are done fixing the patch.
     :param args.tag: Migration version tag.
     """
     print("#####\n##  Checking out and merging into feature main branch...\n#####\n")
     initialize_git_constants()
     print("#####\n##  Merging changes in feature to master branch\n#####\n")
+    # Was barfing because of uncommited container, container is commited in checkout_feature..
     push_subrepo(f"Upgrade to {args.tag} functional.")
     checkout_feature("master")
     merge_migration_branch(f"{args.tag}")

@@ -368,7 +368,7 @@ def merge_migration_branch(suffix: str = None):
         log.critical("Master branch is not checked out in subrepository. Attempted migration branch merge aborted.")
         exit(1)
     FEATURE_REMOTE_URL = configuration()['feature_git_remote_ssh'] if configuration()['checkout_feature_with_ssh'] else configuration()['feature_git_remote_https']
-    cmd = git["subrepo", "clone", f"--branch={_migration_branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, FEATURE_ROOT_PATH]
+    cmd = git["subrepo", "clone", f"--branch={_migration_branch_name(suffix)}", "--method=merge", FEATURE_REMOTE_URL, _subrepo_name()]
     execute(cmd)
 
 
@@ -415,10 +415,6 @@ def checkout_feature(subrepo_branch: str):
     :return:
     """
     _navigate_to(CONTAINER_ROOT_PATH)
-    # TODO: Not sure this is really needed... seems to cause more problems than good
-    #if os.path.isdir(os.path.join(CONTAINER_ROOT_PATH, _map_path(_subrepo_name()))):
-    #    # Push first to not destroy anything.
-    #    push_subrepo(f"Push before cloning {subrepo_branch}...")
     execute(local["rm"]["-r", _subrepo_name()], retcodes=(0, 1))
     execute(local["mkdir"]["-p", _subrepo_name()])
     _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.", retcodes=(0,1))
