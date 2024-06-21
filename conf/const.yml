@@ -3,7 +3,7 @@
 migration_branch_base_name: TI_migration
 unmodified_file_base_name: unmodified
 # Expects container to always have the unmodified raw branch onto which the last patch was applied to be the master branch
-unmodified_branch: v6.18.4_unmodified
+unmodified_branch: last_unmodified_branch_v7.8.1
 subrepo_temporary_directoryname: subrepo_tmp
 android_manifest_file: AndroidManifest.xml
 # Approximate deadline for the diffing process of each file [s]

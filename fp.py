@@ -1,9 +1,6 @@
-import yaml
-
 from featurePatch.android.extractFeature import extract_feature
 from featurePatch.android.applyFeature import match as af_match
 from featurePatch.android.applyFeature import patch as af_patch
-from featurePatch.log import *
 from featurePatch.util import clear_contact_points, add_to_config_template
 from featurePatch.git import *
 import argparse
@@ -243,10 +240,11 @@ def main():
     merging.add_argument('tag', help='Tag to which to migrate the container')
     merging.set_defaults(func=merge)
 
-    update_unmodified = subparsers.add_parser('update_unmodified', help='Updates the unmodified branch to be the untouched '
+    update_umdf = subparsers.add_parser('update_unmodified', help='Updates the unmodified branch to be the untouched '
                                                                         'version of the current tag we are working on, ready for '
                                                                         'the next sync.')
-    update_unmodified.set_defaults(func=update_unmodified)
+    update_umdf.add_argument('tag', help="The tag onto which the feature was last patched. ")
+    update_umdf.set_defaults(func=update_unmodified)
 
     relink_feature = subparsers.add_parser('relink', help="Removes the feature and checks out the master branch of "
                                                           "the feature repository configured in config.yml")

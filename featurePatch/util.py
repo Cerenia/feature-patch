@@ -43,19 +43,24 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
     :return: retcode, stdout, stderr (if retcode is not None) OR stdout
     """
     global run_command_counter
+    def log_command():
+        if do_log:
+            def formatstring_stdout(stdout_arg):
+                # Empty strings are 'falsy'
+                return f"\nOutput:\n {stdout_arg}" if stdout_arg.strip() else ""
+
+            # inspect.stack()[1][3] is the name of the calling function
+            # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+            log.info(f"function:{inspect.stack()[1][3]} \n{cmd} {formatstring_stdout(stdout)}")
+
     log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
     run_command_counter = run_command_counter + 1
     (rc, stdout, stderr) = cmd.run(retcode=retcodes)
     if retcodes is None and rc != 0:
+        log_command()
         log.critical(f"UNEXPECTED ERROR:\nrc: {rc}\nstdout: {stdout}\nstderr: {stderr}\n")
         exit(1)
-    if do_log:
-        def formatstring_stdout(stdout_arg):
-            # Empty strings are 'falsy'
-            return f"\nOutput:\n {stdout_arg}" if stdout_arg.strip() else ""
-        # inspect.stack()[1][3] is the name of the calling function
-        # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-        log.info(f"function:{inspect.stack()[1][3]} \n{cmd} {formatstring_stdout(stdout)}")
+    log_command()
     if retcodes is None:
         return stdout
     else:
@@ -260,6 +265,13 @@ def find_separator(filepath):
     else:
         log.critical(f"Could not find expected separators in filepath:\n{filepath}\nAre you passing a path?")
     return sep
+
+
+def update_last_unmodified_branch_name(tag):
+    constants()['unmodified_branch'] = f"{constants()["unmodified_branch"]}_{tag}"
+    with open(find_conf_path(), 'w') as f:
+        yaml.safe_dump(constants(), f)
+
 
 #####
 ###  Testing

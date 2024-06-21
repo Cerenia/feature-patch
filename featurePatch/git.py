@@ -10,8 +10,10 @@ subrepo expects a bash shell. We make sure to map all paths to POSIX paths in th
 """
 import os
 import re
+
+import yaml
 from plumbum import local
-from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS
+from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS, update_last_unmodified_branch_name
 from .android.util import map_contact_points_path_to_container
 from .log import log
 
@@ -208,7 +210,7 @@ def _checkout_unmodified_file(filepath: str):
     _navigate_to(CONTAINER_ROOT_PATH)
     relative_unmodified_path = path_diff(map_contact_points_path_to_container(filepath),
                                          configuration()["container_git_root"])
-    unmodified_file_content = git["show", f"{constants()['unmodified_branch']}:{_map_path(relative_unmodified_path, True)}"]()
+    unmodified_file_content = git["show", f"{constants()["unmodified_branch"]}":{_map_path(relative_unmodified_path, True)}"]()
     with open(unmodified_file_path(filepath, configuration()["windows"]), "w", encoding="utf-8") as f:
         f.write(unmodified_file_content)
 
@@ -392,11 +394,10 @@ def update_unmodified_branch(tag):
     :param tag: the tag we are currently working on
     """
     # If 'unmodified_branch' already exists, delete it
-    execute(git["branch", "-D", constants()["unmodified_branch"]], retcodes=(0, 1))
+    execute(git["branch", "-D", f"{constants()["unmodified_branch"]}_{tag}"], retcodes=(0, 1))
     # Create 'unmodified_branch' with the new tag
-    execute(git["checkout", f"tags/{tag}", "-b", constants()["unmodified_branch"]])
-    execute(git["merge", CONTAINER_MAIN_BRANCH_NAME])
-    execute(git["checkout", tag])
+    execute(git["checkout", "-b", f"{constants()["unmodified_branch"]}_{tag}", f"tags/{tag}"])
+    update_last_unmodified_branch_name(tag)
 
 
 def checkout_feature_migration_branch(tag: str):
