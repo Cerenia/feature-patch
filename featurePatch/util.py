@@ -51,7 +51,7 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
 
             # inspect.stack()[1][3] is the name of the calling function
             # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-            log.info(f"function:{inspect.stack()[1][3]} \n{cmd} {formatstring_stdout(stdout)}")
+            log.info(f"function:{inspect.stack()[2][3]} \n{cmd} {formatstring_stdout(stdout)}")
 
     log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
     run_command_counter = run_command_counter + 1
