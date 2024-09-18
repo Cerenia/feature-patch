@@ -180,6 +180,7 @@ def update_unmodified(args):
     Update unmodified to whatever was in the tag provided in the arguments.
     Should be the same tag you are now freshly developing on.
     """
+    initialize_git_constants()
     update_unmodified_branch(args.tag)
 
 

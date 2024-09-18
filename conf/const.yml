@@ -1,12 +1,7 @@
-# Any static values that are not user dependent and thus not sensitive. A user may still have reasons to edit these but they are generally not expected to change
-
-migration_branch_base_name: TI_migration
-unmodified_file_base_name: unmodified
-# Expects container to always have the unmodified raw branch onto which the last patch was applied to be the master branch
-unmodified_branch: last_unmodified_branch_v7.5.2
-subrepo_temporary_directoryname: subrepo_tmp
 android_manifest_file: AndroidManifest.xml
-# Approximate deadline for the diffing process of each file [s]
-per_file_diff_deadline: None
-# used for similarity testing while diffing
+migration_branch_base_name: TI_migration
 min_fuzz_score: 80
+per_file_diff_deadline: None
+subrepo_temporary_directoryname: subrepo_tmp
+unmodified_branch: last_unmodified_branch_v7.8.1
+unmodified_file_base_name: unmodified

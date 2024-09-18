@@ -391,13 +391,18 @@ def upgrade_container_to(tag: str):
 def update_unmodified_branch(tag):
     """"
     Prepare unmodified_branch for the next sync by checking out the untouched current tag.
+    PRE: constants()['unmodified_branch'] must contain the _ separator for the version at the end
     :param tag: the tag we are currently working on
     """
+    # Check precondition
+    assert '_' in constants()["unmodified_branch"]
+    new_unmodified_branchname = '_'.join(constants()["unmodified_branch"].split("_")[0:-1]) + f"_{tag}"
+    _navigate_to(CONTAINER_ROOT_PATH)
     # If 'unmodified_branch' already exists, delete it
-    execute(git["branch", "-D", f"{constants()["unmodified_branch"]}_{tag}"], retcodes=(0, 1))
+    execute(git["branch", "-D", new_unmodified_branchname], retcodes=(0, 1))
     # Create 'unmodified_branch' with the new tag
-    execute(git["checkout", "-b", f"{constants()["unmodified_branch"]}_{tag}", f"tags/{tag}"])
-    update_last_unmodified_branch_name(tag)
+    execute(git["checkout", "-b", new_unmodified_branchname, f"tags/{tag}"])
+    update_last_unmodified_branch_name(new_unmodified_branchname)
 
 
 def checkout_feature_migration_branch(tag: str):

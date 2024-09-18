@@ -51,7 +51,7 @@ def execute(cmd, retcodes: tuple[int, ...] = None, do_log=True):
 
             # inspect.stack()[1][3] is the name of the calling function
             # https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-            log.info(f"function:{inspect.stack()[2][3]} \n{cmd} {formatstring_stdout(stdout)}")
+            log.info(f"function:{inspect.currentframe().f_back.f_back.f_code.co_name} \nline: {inspect.currentframe().f_back.f_back.f_lineno} \n{cmd} {formatstring_stdout(stdout)}")
 
     log.debug(f"Command nr: {run_command_counter} \n{cmd}\nRetcodes: {retcodes}")
     run_command_counter = run_command_counter + 1
@@ -267,9 +267,9 @@ def find_separator(filepath):
     return sep
 
 
-def update_last_unmodified_branch_name(tag):
-    constants()['unmodified_branch'] = f"{constants()["unmodified_branch"]}_{tag}"
-    with open(find_conf_path(), 'w') as f:
+def update_last_unmodified_branch_name(new_branchname):
+    constants()['unmodified_branch'] = new_branchname
+    with open(os.path.join(find_conf_path(), "const.yml"), 'w') as f:
         yaml.safe_dump(constants(), f)
 
 
