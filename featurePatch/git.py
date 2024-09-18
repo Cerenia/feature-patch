@@ -13,7 +13,7 @@ import re
 
 import yaml
 from plumbum import local
-from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS, update_last_unmodified_branch_name
+from .util import configuration, constants, path_diff, execute, contact_points_folder_path, CONTACT_POINTS, update_last_unmodified_branch_name, subrepo_path
 from .android.util import map_contact_points_path_to_container
 from .log import log
 
@@ -425,7 +425,27 @@ def checkout_feature(subrepo_branch: str):
     _commit_container(f"Commit before cloning branch {subrepo_branch} of subrepository.", retcodes=(0,1))
     url = configuration()['feature_git_remote_ssh'] if configuration()['checkout_feature_with_ssh'] else configuration()['feature_git_remote_https']
     execute(git["subrepo", SUBREPO_VERBOSITY, "clone", url, _subrepo_name(), "-b", subrepo_branch, "--force"])
+    # Manually update parent in .gitrepo file to the commit containing the clone (currently HEAD)
+    update_subrepo_parent()
 
+
+def update_subrepo_parent():
+    """
+    Updates the parent of the subrepo to the last commit, only call after executing subrepo clone
+    """
+    _navigate_to(CONTAINER_ROOT_PATH)
+    gitrepo_file = os.path.join(subrepo_path(), ".gitrepo")
+    new_parent = execute(git['rev-parse', 'HEAD'])
+    with open(gitrepo_file, 'r') as f:
+        lines = f.readlines()
+    newlines = []
+    for line in lines:
+        if "parent" not in line:
+            newlines.append(line)
+        else:
+            newlines.append(f"parent = {new_parent}")
+    with open(gitrepo_file, 'w') as f:
+        f.writelines(newlines)
 
 def checkout_container(branch):
     _navigate_to(CONTAINER_ROOT_PATH)
